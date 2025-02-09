@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {  Newsreader } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
-import Image from "next/image";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
+const newsReader = Newsreader({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
@@ -33,9 +26,7 @@ export default function RootLayout({
         href="/favicon/favicon.ico"
         type="image/x-icon"
       />
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={` ${newsReader.variable} antialiased`}>
         <Header />
 
         <main className="min-h-screen">{children}</main>

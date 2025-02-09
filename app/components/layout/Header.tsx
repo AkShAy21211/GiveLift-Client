@@ -11,7 +11,9 @@ function Header() {
     <>
       <header className="flex justify-between items-center h-24 p-4 shadow-md">
         <div className="text-xl font-bold">
-          <Image alt="logo" src={"/img/logo.png"} width={130} height={130} />
+          <Link href="/">
+            <Image alt="logo" src={"/img/logo.png"} width={130} height={130} />
+          </Link>
         </div>
         <div className="md:hidden">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -31,12 +33,12 @@ function Header() {
             </Link>
           </nav>
           <div className="space-x-4">
-            <button className="px-4 py-2 border border-black rounded-md">
+            <Link href={"/sign-up"} className="px-4 py-2 border border-black rounded-md">
               Sign Up
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md">
+            </Link>
+            <Link href={'/sign-in'} className="px-4 py-2 bg-blue-600 text-white rounded-md">
               Sign In
-            </button>
+            </Link>
           </div>
         </div>
       </header>

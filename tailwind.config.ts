@@ -16,6 +16,9 @@ export default {
         hero: "url('/img/hero.jpeg')",
         logo: "url('/img/logo.jpeg')",
       },
+      screens: {
+        xs: "480px",
+      },
     },
   },
   plugins: [],
