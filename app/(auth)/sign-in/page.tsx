@@ -1,9 +1,30 @@
-import LoginForm from '@/app/components/form/LoginForm'
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
+"use client";
+import LoginForm from "@/app/components/form/LoginForm";
+import { login, LoginType } from "@/libs/api/auth";
+import { loginSuccess } from "@/store/authSlice";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React from "react";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 
 function SignIn() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const onSubmit = async (userData: LoginType) => {
+    try {
+      const response = await login(userData);
+      toast.success(response.data.message);
+      dispatch(loginSuccess(response.data.role));
+      router.push("/");
+      return;
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+      console.error(error);
+      return;
+    }
+  };
   return (
     <div className="flex flex-col md:flex-row items-center justify-around min-h-screen p-4 bg-gray-100">
       {/* Left Side - Image */}
@@ -17,14 +38,16 @@ function SignIn() {
         />
         <div className="absolute bottom-4 left-4 bg-gray-900 bg-opacity-75 text-white px-4 py-2 rounded-lg flex items-center">
           <p className="mr-2">Already have an account?</p>
-          <Link href={'/sign-up'} className="bg-blue-500 px-4 py-1 rounded-md">Sign In</Link>
+          <Link href={"/sign-up"} className="bg-blue-500 px-4 py-1 rounded-md">
+            Sign In
+          </Link>
         </div>
       </div>
 
       {/* Right Side - Form */}
-      <LoginForm />
+      <LoginForm onSubmit={onSubmit} />
     </div>
-  )
+  );
 }
 
-export default SignIn
+export default SignIn;

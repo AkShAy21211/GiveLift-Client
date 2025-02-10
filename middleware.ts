@@ -2,11 +2,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = ''
-  const isAuthenticated = !!token; // User is authenticated if token exists
+  const cookie = request.cookies.get("currentUser");
+
+  let userData = null;
+  if (cookie?.value) {
+    try {
+      userData = JSON.parse(cookie.value);
+    } catch (error) {
+      console.error("Error parsing cookie:", error);
+    }
+  }
+
+  const isAuthenticated = !!userData; // Ensure valid user data exists
   const { pathname } = request.nextUrl; // Extract pathname
 
-  console.log(`Middleware triggered: ${pathname}, Authenticated: ${isAuthenticated}`);
+  console.log(
+    `Middleware triggered: ${pathname}, Authenticated: ${isAuthenticated}`
+  );
 
   // 🔒 If authenticated, prevent access to `/sign-in` and `/sign-up`
   if (isAuthenticated && (pathname === "/sign-in" || pathname === "/sign-up")) {
@@ -18,7 +30,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url)); // Redirect to login
   }
 
-  return NextResponse.next(); // Allow request if it doesn't match any redirect conditions
+  return NextResponse.next(); // Allow request if no redirect is needed
 }
 
 export const config = {
