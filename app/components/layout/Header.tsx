@@ -1,41 +1,30 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { CircleUserRound, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { logout } from "@/libs/api/auth";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess, logoutSuccess } from "@/store/authSlice";
+import { setUser } from "@/store/authSlice";
 import { RootState } from "@/store/store";
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const router = useRouter();
+  const [loading, setLoading] = useState(true); // Prevent flickering
   const dispatch = useDispatch();
-  const authState = useSelector((state: RootState) => state.auth.user);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.user?.isAuthenticated
+  );
 
   // Sync auth state with client
   useEffect(() => {
-    setIsAuthenticated(authState?.isAuthenticated || false);
-  }, [authState]);
-
-  const logoutHandler = async () => {
-    try {
-      const response = await logout();
-      if (response.data.status) {
-        router.push("/sign-in");
-        toast.success(response.data.message);
-        dispatch(logoutSuccess());
-      } else {
-        toast.error(response.data.message);
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        dispatch(setUser(JSON.parse(storedUser)));
       }
-    } catch (error) {
-      console.error(error);
+      setLoading(false); // Done loading
     }
-  };
+  }, []);
 
   return (
     <>
@@ -45,73 +34,106 @@ function Header() {
             <Image alt="logo" src="/img/logo.png" width={130} height={130} />
           </Link>
         </div>
+
+        {/* Mobile Menu Button */}
         <div className="md:hidden">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+
+        {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-6 items-center">
           <nav className="flex space-x-6">
-            <Link href="/about" className="hover:underline">About</Link>
-            <Link href="/services" className="hover:underline">Services</Link>
-            <Link href="/contact" className="hover:underline">Contact</Link>
+            <Link href="/about" className="hover:underline">
+              About
+            </Link>
+            <Link href="/services" className="hover:underline">
+              Services
+            </Link>
+            <Link href="/contact" className="hover:underline">
+              Contact
+            </Link>
           </nav>
           <div className="space-x-4">
-            {isAuthenticated === null ? null : isAuthenticated ? (
-              <button
-                onClick={logoutHandler}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md"
-              >
-                Log Out
-              </button>
+            {!loading && isAuthenticated ? (
+              <Link href="/profile" className="px-4 py-2 rounded-md">
+                <CircleUserRound />
+              </Link>
             ) : (
-              <>
-                <Link
-                  href="/sign-up"
-                  className="px-4 py-2 border border-black rounded-md"
-                >
-                  Sign Up
-                </Link>
-                <Link
-                  href="/sign-in"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
-                >
-                  Sign In
-                </Link>
-              </>
+              !loading && (
+                <>
+                  <Link
+                    href="/sign-up"
+                    className="px-4 py-2 border border-black rounded-md"
+                  >
+                    Sign Up
+                  </Link>
+                  <Link
+                    href="/sign-in"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )
             )}
           </div>
         </div>
       </header>
+
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden p-4">
+        <div className="md:hidden p-4 bg-white shadow-md absolute top-20 left-0 w-full z-50">
           <nav className="flex flex-col space-y-4">
-            <Link href="/about" className="hover:underline">About</Link>
-            <Link href="/services" className="hover:underline">Services</Link>
-            <Link href="/contact" className="hover:underline">Contact</Link>
-            {isAuthenticated === null ? null : isAuthenticated ? (
-              <button
-                onClick={logoutHandler}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            <Link
+              href="/about"
+              className="hover:underline"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/services"
+              className="hover:underline"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Services
+            </Link>
+            <Link
+              href="/contact"
+              className="hover:underline"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </Link>
+            {!loading && isAuthenticated ? (
+              <Link
+                href="/profile"
+                className=" py-2 rounded-md"
+                onClick={() => setIsMenuOpen(false)}
               >
-                Log Out
-              </button>
+                Account
+              </Link>
             ) : (
-              <>
-                <Link
-                  href="/sign-up"
-                  className="px-4 py-2 border border-black rounded-md"
-                >
-                  Sign Up
-                </Link>
-                <Link
-                  href="/sign-in"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
-                >
-                  Sign In
-                </Link>
-              </>
+              !loading && (
+                <>
+                  <Link
+                    href="/sign-up"
+                    className="px-4 py-2 border border-black rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                  <Link
+                    href="/sign-in"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )
             )}
           </nav>
         </div>

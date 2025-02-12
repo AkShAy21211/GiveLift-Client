@@ -1,8 +1,10 @@
-import { AuthState } from "@/libs/types";
+"use client";
+
 import { createSlice } from "@reduxjs/toolkit";
+import { AuthState } from "@/libs/types";
 
 const initialState: AuthState = {
-  user: null, // Start with null to avoid SSR mismatch
+  user: null,
 };
 
 const authSlice = createSlice({

@@ -11,6 +11,15 @@ export enum USER_ROLE {
   COORDINATOR = "coordinator",
 }
 
+export 
+type Donation = {
+  title: string;
+  amount: number;
+  date: string;
+};
+
+
+export type ViewType = 'profile' | 'donations' | 'reports';
 
 
 export interface AuthState {
@@ -21,20 +30,19 @@ export interface AuthState {
 }
 
 export interface Address {
-  coordinates: number[];
   district: string;
   city: string;
-  pinCode: number;
+  pincode: number;
 }
 
 export interface User {
-  _id: string;
+  _id?: string;
   name: string;
   email: string;
   avatar: string;
   phone: string;
-  role: string;
-  isVolunteer: boolean;
+  role?: string;
+  isVolunteer?: boolean;
   address: Address;
 }
 

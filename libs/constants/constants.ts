@@ -12,3 +12,24 @@ export const DISASTER_ROUTES={
     view:"/disasters/:id",
 
 }
+
+export const USER_ROUTE={
+    profile:"/user/me",
+    updateProfie:"/user/update-profile",
+}
+
+export const PROFILE_MENU =[
+    {
+        name:"Profile",
+        route:"/profile",
+    },
+    {
+        name:"Donations",
+        route:"/donations",
+    },
+    {
+        name:"Reports",
+        route:"/reports",
+    },
+
+]
