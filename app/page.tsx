@@ -3,6 +3,8 @@ import DisasterCard from "./components/card/DisasterCard";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import DisasterCardSkeleton from "./components/skleton/DisasterCardSkeleton";
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "GiveLift",
@@ -14,7 +16,7 @@ export default async function Home() {
   // ✅ Fetch disasters in the parent (Server Component)
 
   return (
-    <main className="h-auto w-full">
+    <div className="h-auto w-full">
       {/* Hero Section */}
       <Hero />
 
@@ -24,6 +26,6 @@ export default async function Home() {
           <DisasterCard />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 }

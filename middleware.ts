@@ -13,26 +13,32 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const isAuthenticated = !!userData; // Ensure valid user data exists
+  const isAuthenticated = !!userData; // Check if user data exists
   const { pathname } = request.nextUrl; // Extract pathname
 
-  console.log(
-    `Middleware triggered: ${pathname}, Authenticated: ${isAuthenticated}`
-  );
-
-  // 🔒 If authenticated, prevent access to `/sign-in` and `/sign-up`
-  if (isAuthenticated && (pathname === "/sign-in" || pathname === "/sign-up")) {
-    return NextResponse.redirect(new URL("/", request.url)); // Redirect to dashboard
+  // User authentication rules
+  if (!pathname.startsWith("/admin")) {
+    if (isAuthenticated && (pathname === "/sign-in" || pathname === "/sign-up")) {
+      return NextResponse.redirect(new URL("/", request.url)); // Redirect authenticated users away from auth pages
+    }
+    if (!isAuthenticated && pathname !== "/sign-in" && pathname !== "/sign-up") {
+      return NextResponse.redirect(new URL("/sign-in", request.url)); // Redirect unauthenticated users to sign-in
+    }
   }
 
-  // 🔐 If NOT authenticated, prevent access to protected routes
-  if (!isAuthenticated && pathname !== "/sign-in" && pathname !== "/sign-up") {
-    return NextResponse.redirect(new URL("/sign-in", request.url)); // Redirect to login
+  // Admin authentication rules
+  if (pathname.startsWith("/admin")) {
+    if (isAuthenticated && pathname === "/admin/sign-in") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url)); // Redirect authenticated admin away from login
+    }
+    if (!isAuthenticated && pathname !== "/admin/sign-in") {
+      return NextResponse.redirect(new URL("/admin/sign-in", request.url)); // Redirect unauthenticated admins to sign-in
+    }
   }
 
   return NextResponse.next(); // Allow request if no redirect is needed
 }
 
 export const config = {
-  matcher: ["/", "/profile", "/settings", "/sign-in", "/sign-up"], // Protect specific routes
+  matcher: ["/", "/admin/:path*", "/sign-in", "/sign-up"], // Protect specific routes
 };

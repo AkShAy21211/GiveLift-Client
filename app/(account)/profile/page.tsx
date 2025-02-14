@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { User, ViewType } from "@/libs/types";
+import { useEffect, useState } from "react";
+import Head from "next/head";
+import { User } from "@/libs/types";
 import { getUserProfile, updateUserPofile } from "@/libs/api/user";
 import dynamic from "next/dynamic";
 import ProfileFormSkeleton from "../../components/skleton/ProfileFormSkeleton";
@@ -11,17 +12,18 @@ const ProfileForm = dynamic(() => import("../../components/form/ProfileForm"), {
   loading: () => <ProfileFormSkeleton />,
 });
 
- function Profile() {
-  const [userProfile, setUserProfile] = useState<any>({});
-  const [refetch, setRefetch] = useState(true);
+function Profile() {
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+
+  useEffect(() => {
+    document.title = "Profile";
+  }, []);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await getUserProfile();
         setUserProfile(response.data);
-        setRefetch(false);
-        return;
       } catch (error) {
         console.error("Error fetching user profile", error);
       }
@@ -34,14 +36,22 @@ const ProfileForm = dynamic(() => import("../../components/form/ProfileForm"), {
       const response = await updateUserPofile(data);
       if (response.data) {
         toast.success(response.data.message);
-        return;
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to update profile");
       console.error("Error updating user profile", error);
     }
   };
-  return <ProfileForm onSubmit={updateProfile} userData={userProfile} />;
+
+  return (
+    <>
+      {userProfile ? (
+        <ProfileForm onSubmit={updateProfile} userData={userProfile} />
+      ) : (
+        <ProfileFormSkeleton />
+      )}
+    </>
+  );
 }
 
 export default Profile;
