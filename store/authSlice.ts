@@ -1,7 +1,7 @@
 "use client";
 
 import { createSlice } from "@reduxjs/toolkit";
-import { AuthState } from "@/libs/types";
+import { AuthState } from "@/lib/types";
 
 const initialState: AuthState = {
   user: null,

@@ -1,6 +1,6 @@
 "use client";
 import LoginForm from "@/app/components/form/LoginForm";
-import { login, LoginType } from "@/libs/api/auth";
+import { login, LoginType } from "@/lib/api/auth";
 import { loginSuccess } from "@/store/authSlice";
 import Image from "next/image";
 import Link from "next/link";

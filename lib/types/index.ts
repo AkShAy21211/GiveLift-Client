@@ -11,13 +11,6 @@ export enum USER_ROLE {
   COORDINATOR = "coordinator",
 }
 
-export 
-type Donation = {
-  title: string;
-  amount: number;
-  date: string;
-};
-
 
 export type ViewType = 'profile' | 'donations' | 'reports';
 
@@ -45,4 +38,5 @@ export interface User {
   isVolunteer?: boolean;
   address: Address;
 }
+
 

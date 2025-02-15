@@ -1,21 +1,34 @@
 "use client";
-import RegisterForm from "@/app/components/form/RegisterForm";
-import { register, RegisterType } from "@/libs/api/auth";
-import { USER_ROLE } from "@/libs/types";
+import { registerHandler, RegisterType } from "@/lib/api/auth";
+import { USER_ROLE } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "@/store/authSlice";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { registerValidationSchema } from "@/lib/validation";
+import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 export default function SignUp() {
   const router = useRouter();
   const dispatch = useDispatch();
+
+
+  // Settig title for the page 
+  useEffect(() => {
+    document.title = "Sign up";
+  }, []);
+
+
   const onSubmit = async (userData: RegisterType) => {
     try {
       userData.role = USER_ROLE.USER;
       const { confirmPassword, ...data } = userData;
-      const response = await register(data);
+      const response = await registerHandler(data);
       toast.success(response.data.message);
       dispatch(loginSuccess(response.data.role));
       router.push("/");
@@ -27,8 +40,23 @@ export default function SignUp() {
     }
   };
 
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(registerValidationSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      phone: "",
+    },
+  });
+
   return (
-    <div className="flex flex-col md:flex-row items-center justify-around min-h-screen p-4 bg-gray-100">
+    <div className="flex flex-col md:flex-row items-center justify-between min-h-screen  bg-gray-100">
       {/* Left Side - Image */}
       <div className=" hidden md:flex relative w-full md:w-1/2 h-screen ">
         <Image
@@ -47,7 +75,65 @@ export default function SignUp() {
       </div>
 
       {/* Right Side - Form */}
-      <RegisterForm onSubmit={onSubmit} />
+      {/* Sign-in Form */}
+      <div className=" bg-auth bg-no-repeat bg-cover bg-center  md:bg-none w-full md:w-1/2 space-y-4 px-3 md:px-0  h-screen flex justify-center items-center">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white p-6 rounded-lg shadow-lg w-full  md:w-1/2"
+        >
+          <div className="flex justify-center">
+            <Image
+              alt="logo"
+              width={150}
+              height={150}
+              objectFit="cover"
+              src={"/img/logo.png"}
+            />
+          </div>{" "}
+          <Input
+            name="name"
+            label="Name"
+            type="text"
+            register={register}
+            error={errors.name?.message}
+          />
+          <Input
+            name="email"
+            label="Email"
+            type="email"
+            register={register}
+            error={errors.email?.message}
+          />
+          <Input
+            name="phone"
+            label="Phone"
+            type="text"
+            register={register}
+            error={errors.password?.message}
+          />
+          <Input
+            name="password"
+            label="Password"
+            type="password"
+            register={register}
+            error={errors.password?.message}
+          />
+          <Input
+            name="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            register={register}
+            error={errors.confirmPassword?.message}
+          />
+          <Button
+            variant={"default"}
+            type="submit"
+            className="w-full bg-blue-500 text-white hover:bg-blue-600 mt-5"
+          >
+            Sign In
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
