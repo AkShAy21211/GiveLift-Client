@@ -25,7 +25,7 @@ export const registerValidationSchema = Yup.object().shape({
     .required("Phone number is required"),
 });
 
-export const updateUserProfileSchema = Yup.object().shape({
+export const profileSchema = Yup.object().shape({
   name: Yup.string()
     .min(3, "Name must be at least 3 characters")
     .max(50, "Name must be less than 50 characters")

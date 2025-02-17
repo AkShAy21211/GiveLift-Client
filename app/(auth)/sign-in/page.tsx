@@ -12,19 +12,16 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button } from "@/components/ui/button";
-import Head from "next/head";
 
 function SignIn() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-
-
-  // Settig title for the page 
+  // Settig title for the page
   useEffect(() => {
     document.title = "Sign in";
   }, []);
-  
+
   const {
     register,
     handleSubmit,
@@ -65,6 +62,7 @@ function SignIn() {
             <p className="mr-2">Don't have an account?</p>
             <Link
               href={"/sign-up"}
+              aria-label="Sign up"
               className="bg-blue-500 px-4 py-1 rounded-md"
             >
               Sign Up
@@ -90,6 +88,7 @@ function SignIn() {
             <div>
               <Input
                 name="email"
+                alt="email"
                 label="Email"
                 type="email"
                 register={register}
@@ -99,6 +98,7 @@ function SignIn() {
             <div>
               <Input
                 name="password"
+                alt="password"
                 label="Password"
                 type="password"
                 register={register}
@@ -107,6 +107,7 @@ function SignIn() {
             </div>
             <div className="  mt-3  text-end ">
               <Link
+                aria-label="Forget password"
                 href={"/sign-up"}
                 className=" px-3  rounded-md text-blue-500"
               >
@@ -123,6 +124,7 @@ function SignIn() {
             <div className=" md:hidden  mt-3  text-center ">
               Don't have an account?
               <Link
+                aria-label="Sign up"
                 href={"/sign-up"}
                 className=" px-3  rounded-md text-blue-500"
               >

@@ -14,6 +14,11 @@ export enum USER_ROLE {
 
 export type ViewType = 'profile' | 'donations' | 'reports';
 
+export enum SERVIRITY{
+  LOW = 'low',
+  MEDIUM ='medium',
+  HIGH = 'high'
+}
 
 export interface AuthState {
     user:{
@@ -40,3 +45,23 @@ export interface User {
 }
 
 
+
+export interface Disaster {
+  _id:string;
+  title: string;
+  description: string;
+  type: string;
+  location: {
+    coordinates: number[];
+    district: string;
+    city: string;
+    pinCode: number;
+  };
+  reportedBy?: string;
+  byAdmin?:boolean;
+  severity: string;
+  status: boolean;
+  media: string[];
+  createdAt: string;
+  updatedAt?: string;
+}

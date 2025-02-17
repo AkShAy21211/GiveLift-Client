@@ -17,12 +17,10 @@ export default function SignUp() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-
-  // Settig title for the page 
+  // Settig title for the page
   useEffect(() => {
     document.title = "Sign up";
   }, []);
-
 
   const onSubmit = async (userData: RegisterType) => {
     try {
@@ -56,7 +54,7 @@ export default function SignUp() {
   });
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-between min-h-screen  bg-gray-100">
+    <div className="flex flex-col md:flex-row items-center justify-between h-screen  bg-gray-100">
       {/* Left Side - Image */}
       <div className=" hidden md:flex relative w-full md:w-1/2 h-screen ">
         <Image
@@ -68,15 +66,18 @@ export default function SignUp() {
         />
         <div className="absolute bottom-4 left-4 bg-gray-900 bg-opacity-75 text-white px-4 py-2 rounded-lg flex items-center">
           <p className="mr-2">Already have an account?</p>
-          <Link href={"/sign-in"} className="bg-blue-500 px-4 py-1 rounded-md">
+          <Link
+            aria-label="Sign in"
+            href={"/sign-in"}
+            className="bg-blue-500 px-4 py-1 rounded-md"
+          >
             Sign In
           </Link>
         </div>
       </div>
 
-      {/* Right Side - Form */}
       {/* Sign-in Form */}
-      <div className=" bg-auth bg-no-repeat bg-cover bg-center  md:bg-none w-full md:w-1/2 space-y-4 px-3 md:px-0  h-screen flex justify-center items-center">
+      <div className=" bg-auth bg-no-repeat bg-cover bg-center  mb-10 md:mt-20  md:bg-none w-full md:w-2/3 space-y-4 px-3 md:px-0  h-screen flex justify-center items-center">
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white p-6 rounded-lg shadow-lg w-full  md:w-1/2"
@@ -85,49 +86,60 @@ export default function SignUp() {
             <Image
               alt="logo"
               width={150}
-              height={150}
+              height={30}
               objectFit="cover"
               src={"/img/logo.png"}
             />
           </div>{" "}
-          <Input
-            name="name"
-            label="Name"
-            type="text"
-            register={register}
-            error={errors.name?.message}
-          />
-          <Input
-            name="email"
-            label="Email"
-            type="email"
-            register={register}
-            error={errors.email?.message}
-          />
-          <Input
-            name="phone"
-            label="Phone"
-            type="text"
-            register={register}
-            error={errors.password?.message}
-          />
-          <Input
-            name="password"
-            label="Password"
-            type="password"
-            register={register}
-            error={errors.password?.message}
-          />
-          <Input
-            name="confirmPassword"
-            label="Confirm Password"
-            type="password"
-            register={register}
-            error={errors.confirmPassword?.message}
-          />
+          <div className="flex flex-col md:flex-row gap-5">
+            <Input
+              name="name"
+              label="Name"
+              alt="Name"
+              type="text"
+              register={register}
+              error={errors.name?.message}
+            />
+            <Input
+              name="email"
+              label="Email"
+              alt="Email"
+              type="email"
+              register={register}
+              error={errors.email?.message}
+            />
+          </div>
+          <div className="flex flex-col md:flex-row gap-5">
+            <Input
+              name="phone"
+              label="Phone"
+              type="text"
+              alt="Phone"
+              register={register}
+              error={errors.password?.message}
+            />
+            <Input
+              name="password"
+              label="Password"
+              type="password"
+              register={register}
+              error={errors.password?.message}
+            />
+          </div>
+          <div className="flex flex-col md:flex-row gap-5">
+            <Input
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              alt="Confirm Password"
+              register={register}
+              error={errors.confirmPassword?.message}
+            />
+          </div>
           <Button
             variant={"default"}
             type="submit"
+            aria-label="Sign in"
             className="w-full bg-blue-500 text-white hover:bg-blue-600 mt-5"
           >
             Sign In
