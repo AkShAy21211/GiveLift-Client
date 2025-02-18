@@ -17,13 +17,13 @@ import Image from "next/image";
 import logo from "@/app/assests/images/logo.png";
 
 function Layout({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="flex h-screen  w-full overflow-auto">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50   transition-all duration-300 
+        className={`fixed inset-y-0 left-0 z-50   shadow-lg transition-all duration-300 
           ${isOpen ? "w-64" : "w-16"} md:relative`}
       >
         <div className="p-4 flex justify-between items-center bg-white ">

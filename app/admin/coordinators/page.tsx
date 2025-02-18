@@ -8,13 +8,15 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { getAllDisasters } from "@/lib/api/disaster";
-import { User } from "@/lib/types";
+import { Coordinator, User } from "@/lib/types";
 import { TableRowSkeleton } from "@/components/ui/skeleton";
 import { usePathname } from "next/navigation";
 import { Pagination } from "@/components/ui/Pagination";
-import { getCoordinators } from "@/lib/api/admin";
+import { createCoordinator, getCoordinators } from "@/lib/api/admin";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { CreateCoordinatorModal } from "@/components/ui/dialog";
+import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -45,13 +47,31 @@ function Coordinators() {
     }
   }
 
+  // create new coordinator handler
+  const onSubmit = async (coordinatorData: Coordinator) => {
+    try {
+      const response = await createCoordinator(coordinatorData);
+      if (response.data) {
+        toast.success(response.data.message);
+        return;
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+      return;
+    }
+  };
+
   return (
     <div className="p-20 md:p-6">
-      <h2 className="text-xl font-bold mb-4">
-        {" "}
-        <span className="text-gray-500">Admin</span> /
-        <span className="text-gray-900"> Disaster</span> Coordinators
-      </h2>
+      <div className="flex justify-between">
+        <h2 className="text-xl font-bold mb-4">
+          {" "}
+          <span className="text-gray-500">Admin</span> /
+          <span className="text-gray-900"> Disaster</span> Coordinators
+        </h2>
+
+        <CreateCoordinatorModal onSubmit={onSubmit} />
+      </div>
 
       <Table>
         <TableHeader>

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.2:5000/api"; // Express API URL
+  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.3:5000/api"; // Express API URL
 
 // lib/fetcher.ts
 export const api = axios.create({

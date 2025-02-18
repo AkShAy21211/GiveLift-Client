@@ -10,9 +10,7 @@ import {
 } from "@/components/ui/table";
 import { getAllDisasters } from "@/lib/api/disaster";
 import { Disaster, SERVIRITY } from "@/lib/types";
-import {
-  TableRowSkeleton,
-} from "@/components/ui/skeleton";
+import { TableRowSkeleton } from "@/components/ui/skeleton";
 import { usePathname } from "next/navigation";
 import { Pagination } from "@/components/ui/Pagination";
 
@@ -57,12 +55,12 @@ function Disasters() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Severity</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead aria-label="Title">Title</TableHead>
+            <TableHead aria-label="Type">Type</TableHead>
+            <TableHead aria-label="Severity">Severity</TableHead>
+            <TableHead aria-label="Location">Location</TableHead>
+            <TableHead aria-label="Status">Status</TableHead>
+            <TableHead aria-label="Date">Date</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

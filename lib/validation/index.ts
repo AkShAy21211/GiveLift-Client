@@ -73,8 +73,8 @@ export const createCoordinatorSchema = Yup.object().shape({
   address: Yup.object().shape({
     district: Yup.string().required("District is required"),
     city: Yup.string().required("City is required"),
-    pincode: Yup.number()
-      .typeError("Pincode must be a number")
+    pincode: Yup.string()
+      .matches(/^[0-9]{6}$/, "Pincode must be exactly 6 digits")
       .required("Pincode is required"),
   }),
   password: Yup.string()

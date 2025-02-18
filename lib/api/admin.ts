@@ -1,5 +1,6 @@
 import { api } from "../axios";
 import { ADMIN_ROUTE, AUTH_ROUTES } from "../constants/constants";
+import { Coordinator } from "../types";
 
 export type LoginType = {
   email: string;
@@ -10,17 +11,9 @@ export const login = async ({ email, password }: LoginType) => {
   return response;
 };
 
-export type CreateCordinatorType={
-  name: string;
-  email: string;
-  password: string;
-  address: { district: string; city: string; pincode: number };
-  phone: string;
-  role?: string; 
 
-}
 
-export const createCoordinator = async (coordinatorData: CreateCordinatorType) => {
+export const createCoordinator = async (coordinatorData: Coordinator) => {
   const response = await api.post(ADMIN_ROUTE.createCoordinator, coordinatorData);
   return response;
 };

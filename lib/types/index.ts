@@ -1,5 +1,3 @@
-
-
 export type ApiError = {
   success: false;
   message: string;
@@ -11,26 +9,25 @@ export enum USER_ROLE {
   COORDINATOR = "coordinator",
 }
 
+export type ViewType = "profile" | "donations" | "reports";
 
-export type ViewType = 'profile' | 'donations' | 'reports';
-
-export enum SERVIRITY{
-  LOW = 'low',
-  MEDIUM ='medium',
-  HIGH = 'high'
+export enum SERVIRITY {
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
 }
 
 export interface AuthState {
-    user:{
-      isAuthenticated: boolean;
-      role:string
-    }|null
+  user: {
+    isAuthenticated: boolean;
+    role: string;
+  } | null;
 }
 
 export interface Address {
   district: string;
   city: string;
-  pincode: number;
+  pincode: string;
 }
 
 export interface User {
@@ -44,10 +41,8 @@ export interface User {
   address: Address;
 }
 
-
-
 export interface Disaster {
-  _id:string;
+  _id: string;
   title: string;
   description: string;
   type: string;
@@ -58,10 +53,21 @@ export interface Disaster {
     pinCode: number;
   };
   reportedBy?: string;
-  byAdmin?:boolean;
+  byAdmin?: boolean;
   severity: string;
   status: boolean;
   media: string[];
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface Coordinator {
+  name: string;
+  email: string;
+  avatar?: File;
+  password: string;
+  phone: string;
+  role?: string;
+  isVolunteer?: boolean;
+  address: Address;
 }
