@@ -19,7 +19,6 @@ export const registerValidationSchema = Yup.object().shape({
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm password is required"),
 
-
   phone: Yup.string()
     .matches(/^[0-9]{10}$/, "Phone number must be a 10-digit number")
     .required("Phone number is required"),
@@ -83,3 +82,24 @@ export const createCoordinatorSchema = Yup.object().shape({
   image: Yup.mixed().optional(), // Image is optional
 });
 
+export const disasterReportValidationSchema = Yup.object({
+  title: Yup.string().required("Title is required"),
+  description: Yup.string().required("Description is required"),
+  location: Yup.object({
+    coordinates: Yup.array()
+      .of(Yup.number().required("Coordinate values are required"))
+      .length(
+        2,
+        "Coordinates must have exactly two values: [latitude, longitude]"
+      ),
+    district: Yup.string().required("District is required"),
+    city: Yup.string().required("City is required"),
+    pincode: Yup.string()
+      .matches(/^\d{6}$/, "Pin Code must be a 6-digit number")
+      .required("Pin Code is required"),
+  }),
+  severity: Yup.string()
+    .oneOf(["Low", "Medium", "High"], "Invalid severity level")
+    .required("Severity is required"),
+  image: Yup.mixed(),
+});

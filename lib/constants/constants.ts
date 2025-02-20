@@ -13,9 +13,9 @@ export const ADMIN_ROUTE={
 }
 
 export const DISASTER_ROUTES = {
-  create: "/disasters/create",
+  report: "/disaster/report",
   list: "/disaster",
-  view: "/disasters/:id",
+  view: "/disaster/:id",
 };
 
 export const USER_ROUTE = {

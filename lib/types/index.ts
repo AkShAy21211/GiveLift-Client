@@ -71,3 +71,17 @@ export interface Coordinator {
   isVolunteer?: boolean;
   address: Address;
 }
+
+export interface DisasterReport {
+  title: string;
+  description: string;
+  location: {
+    coordinates: [number, number];
+    district: string;
+    city: string;
+    pincode: string;
+  };
+  type:string,
+  severity: string;
+  image: FileList[];
+}
