@@ -7,6 +7,7 @@ interface DisasterCardProps {
   imageUrl: string | null;
   className: string;
   district:string;
+  peopleEffected:number;
   imageClass: string;
   servirity: string;
 }
@@ -23,6 +24,7 @@ function DisasterCard({
   imageClass,
   district,
   servirity,
+  peopleEffected
 }: DisasterCardProps) {
   return (
     <div className={`w-full max-w-sm aspect-[4/5] rounded-lg overflow-hidden shadow-md ${className}`}>
@@ -56,7 +58,7 @@ function DisasterCard({
             <MapPin className="w-4 h-4 font-extralight" /> {district}
           </span>
           <span aria-label="People affected" className="flex justify-center items-center gap-1 font-semibold">
-            <Users className="w-4 h-4 font-extralight ml-1" /> 20
+            <Users className="w-4 h-4 font-extralight ml-1" /> {peopleEffected}
           </span>
         </p>
       </div>

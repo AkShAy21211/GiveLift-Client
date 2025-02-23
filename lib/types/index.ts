@@ -57,6 +57,7 @@ export interface Disaster {
   severity: string;
   status: boolean;
   media: string[];
+  peopleEffected: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -81,7 +82,9 @@ export interface DisasterReport {
     city: string;
     pincode: string;
   };
-  type:string,
+  type: string;
   severity: string;
+
   image: FileList[];
+  peopleEffected?: number;
 }

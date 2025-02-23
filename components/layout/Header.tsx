@@ -12,13 +12,14 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // To prevent hydration mismatch
   const isAuthenticated = useSelector((state: RootState) => state.auth.user);
+  const role = useSelector((state: RootState) => state.auth.user?.role);
   const dispatch = useDispatch();
 
   useEffect(() => {
     setIsMounted(true); // Ensures component is mounted before rendering dynamic content
     const user = localStorage.getItem("user");
     if (user) {
-      dispatch(setUser(user));
+      dispatch(setUser(JSON.parse(user)));
     }
   }, []);
 
@@ -32,6 +33,15 @@ const Header = () => {
 
         {/* 🔹 Desktop Menu (Links) */}
         <nav className="hidden md:flex space-x-6">
+          {role === "coordinator" && (
+            <Link
+              href="/report-disaster"
+              className="py-2  "
+            >
+              Report Disaster
+            </Link>
+          )}
+
           <Link href="/about" className=" py-2">
             About
           </Link>
@@ -57,10 +67,7 @@ const Header = () => {
               </Link>
             </>
           ) : (
-            <Link
-              href="/profile"
-              className="  px-4 py-2 rounded-lg"
-            >
+            <Link href="/profile" className="  px-4 py-2 rounded-lg">
               <CircleUser />
             </Link>
           )}
@@ -76,6 +83,11 @@ const Header = () => {
       {isOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-white shadow-lg p-4 flex flex-col space-y-4">
           <nav className="flex flex-col space-y-2">
+            {role === "coordinator" && (
+              <Link href="/report-disaster" className="py-2">
+                Report Disaster
+              </Link>
+            )}
             <Link href="/about" className="text-gray-700 hover:text-blue-600">
               About
             </Link>
@@ -101,10 +113,7 @@ const Header = () => {
                 </Link>
               </>
             ) : (
-              <Link
-                href="/profile"
-                className="  py-2 rounded-lg"
-              >
+              <Link href="/profile" className="  py-2 rounded-lg">
                 Account
               </Link>
             )}

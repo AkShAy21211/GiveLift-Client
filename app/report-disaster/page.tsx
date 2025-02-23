@@ -90,7 +90,10 @@ function ReportDisaster() {
 
   return (
     <div className="max-w-2xl mx-auto h-screen mt-20">
-      <h2 className="text-xl font-bold mb-4 pt-5">Report Disaster</h2>
+      <h2
+        className="text-xl  font-serif mb-4 pt-5" >
+        Report Disaster
+      </h2>
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-4 bg-white shadow-lg rounded-lg p-6"
@@ -232,7 +235,11 @@ function ReportDisaster() {
           type="submit"
           className="w-full p-2 bg-blue-500 text-white rounded"
         >
-          {isSubmitting ? <Loader className="animate-spin  w-full" size={20} color="#fff" /> : "Submit"}
+          {isSubmitting ? (
+            <Loader className="animate-spin  w-full" size={20} color="#fff" />
+          ) : (
+            "Submit"
+          )}
         </button>
       </form>
     </div>

@@ -19,6 +19,7 @@ async function LatestReport() {
           servirity={disaster.severity.toLowerCase()}
           district={disaster.location.district}
           imageUrl={disaster.media[0]}
+          peopleEffected={disaster.peopleEffected}
           className={
             " shadow-md  overflow-hidden p-3 hover:scale-105 duration-150 cursor-pointer"
           }

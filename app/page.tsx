@@ -37,12 +37,7 @@ export default function Home() {
             Together, we rise
           </h1>
           <div className="flex flex-col md:flex-row gap-4 mt-6  items-center">
-            <Button
-              aria-label="Report Disaster"
-              className="bg-yellow-600 hover:bg-yellow-700 px-6 h-12 w-52 text-lg"
-            >
-              Report Disaster
-            </Button>
+            
             <Button
               aria-label="Join as Volunteer"
               className="bg-blue-600 hover:bg-blue-700 px-6 w-52 h-12 text-lg"
@@ -61,8 +56,10 @@ export default function Home() {
           aria-label="Latest Reports"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 gap-5 mt-3 mb-5"
         >
-          <Suspense fallback={<DisasterSkeletonCard className="w-full " count={4} />}>
-          <LatestReport/>
+          <Suspense
+            fallback={<DisasterSkeletonCard className="w-full " count={4} />}
+          >
+            <LatestReport />
           </Suspense>
         </section>
       </>

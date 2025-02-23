@@ -19,7 +19,7 @@ function DisasterSkeletonCard({
   count: number;
   className: string;
 }) {
-  return new Array(count).fill(0).map((i) => (
+  return new Array(count).fill(0).map((_,i) => (
     <div key={i} className={`flex flex-col space-y-3`}>
       <Skeleton className={` ${className} h-[150px] md:w-[300px] rounded-xl`} />
       <div className="space-y-2">
