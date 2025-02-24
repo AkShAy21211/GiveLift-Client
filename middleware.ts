@@ -17,7 +17,6 @@ export function middleware(request: NextRequest) {
   const role: string = userData?.role;
   const { pathname } = request.nextUrl; // Extract pathname
 
-  
   // User authentication rules
   if (!pathname.startsWith("/admin")) {
     if (
@@ -29,7 +28,8 @@ export function middleware(request: NextRequest) {
     if (
       !isAuthenticated &&
       pathname !== "/sign-in" &&
-      pathname !== "/sign-up"
+      pathname !== "/sign-up" &&
+      pathname !== "/forgot-password" // Allow access to forgot-password
     ) {
       return NextResponse.redirect(new URL("/sign-in", request.url)); // Redirect unauthenticated users to sign-in
     }
@@ -37,7 +37,6 @@ export function middleware(request: NextRequest) {
 
   // Admin authentication rules
   if (pathname.startsWith("/admin")) {
-
     if (isAuthenticated && pathname === "/admin/sign-in") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url)); // Redirect authenticated admin away from login
     }

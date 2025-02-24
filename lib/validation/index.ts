@@ -98,8 +98,17 @@ export const disasterReportValidationSchema = Yup.object({
       .matches(/^\d{6}$/, "Pin Code must be a 6-digit number")
       .required("Pin Code is required"),
   }),
+  peopleEffected: Yup.number().required("People effected  is required"),
   severity: Yup.string()
     .oneOf(["Low", "Medium", "High"], "Invalid severity level")
     .required("Severity is required"),
   image: Yup.mixed(),
 });
+
+export const passwordSchema = Yup.string()
+  .min(6, "Password must be at least 6 characters")
+  .required("Password is required");
+
+export const phoneSchema = Yup.string()
+  .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
+  .required("Phone number is required");

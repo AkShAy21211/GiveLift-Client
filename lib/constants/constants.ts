@@ -2,15 +2,16 @@ export const AUTH_ROUTES = {
   login: "/auth/sign-in",
   register: "/auth/sign-up",
   logout: "/auth/logout",
-
-
+  forgotPassword: "/auth/forgot-password",
+  verifyForgetPasswordOtp: "/auth/forgot-password/verify",
+  resetPassword:"/auth/forgot-password/reset",
   adminLogin: "/admin/auth/sign-in",
 };
 
-export const ADMIN_ROUTE={
-  createCoordinator:"/admin/create-coordinator",
-  getCoordinators:"/admin/coordinators",
-}
+export const ADMIN_ROUTE = {
+  createCoordinator: "/admin/create-coordinator",
+  getCoordinators: "/admin/coordinators",
+};
 
 export const DISASTER_ROUTES = {
   report: "/disaster/report",

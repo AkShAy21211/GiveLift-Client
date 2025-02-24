@@ -108,7 +108,7 @@ function SignIn() {
             <div className="  mt-3  text-end ">
               <Link
                 aria-label="Forget password"
-                href={"/sign-up"}
+                href={"/forgot-password"}
                 className=" px-3  rounded-md text-blue-500"
               >
                 Forget password

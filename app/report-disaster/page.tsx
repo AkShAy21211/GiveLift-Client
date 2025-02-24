@@ -31,6 +31,7 @@ function ReportDisaster() {
         pincode: "",
       },
       severity: "",
+      peopleEffected:0,
       image: [],
     },
   });
@@ -55,6 +56,8 @@ function ReportDisaster() {
   };
 
   const onSubmit = async (data: DisasterReport) => {
+    console.log(data);
+    
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("type", data.type);
@@ -63,6 +66,7 @@ function ReportDisaster() {
     formData.append("location[city]", data.location.city);
     formData.append("location[pincode]", data.location.pincode);
     formData.append("severity", data.severity);
+    formData.append("peopleEffected", data.peopleEffected.toString());
 
     data.location.coordinates.forEach((coord, index) => {
       formData.append(`location[coordinates][${index}]`, coord.toString());
@@ -89,14 +93,11 @@ function ReportDisaster() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto h-screen mt-20">
-      <h2
-        className="text-xl  font-serif mb-4 pt-5" >
-        Report Disaster
-      </h2>
+    <div className="max-w-2xl mx-auto h-auto mt-20">
+      <h2 className="text-xl  font-serif mb-4 pt-5">Report Disaster</h2>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 bg-white shadow-lg rounded-lg p-6"
+        className="space-y-4 bg-white shadow-lg rounded-lg p-6 "
         encType="multipart/form-data"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -135,7 +136,14 @@ function ReportDisaster() {
             error={errors.location?.pincode?.message}
             register={register}
           />
-
+          <Input
+            className="w-full p-2 border rounded"
+            name="peopleEffected"
+            label="Number of people effected"
+            type="number"
+            error={errors.peopleEffected?.message}
+            register={register}
+          />
           <div>
             <label
               className="mb-1 text-sm font-medium text-gray-500"

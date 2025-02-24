@@ -25,6 +25,23 @@ export const registerHandler = async (userData: RegisterType) => {
   return response;
 };
 
+export const forgetPassword = async (phone: string) => {
+  const response = await api.post(AUTH_ROUTES.forgotPassword, { phone });
+  return response;
+};
+
+export const verifyForgetPasswordOtp = async (otp: string) => {
+  const response = await api.post(AUTH_ROUTES.verifyForgetPasswordOtp, { otp });
+  return response;
+};
+
+export const resetPasswordOtp = async (password: string) => {
+  const response = await api.post(AUTH_ROUTES.resetPassword, {
+    password,
+  });
+  return response;
+};
+
 export const logout = async () => {
   const response = await api.get(AUTH_ROUTES.logout);
   return response;

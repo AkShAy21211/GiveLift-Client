@@ -86,5 +86,5 @@ export interface DisasterReport {
   severity: string;
 
   image: FileList[];
-  peopleEffected?: number;
+  peopleEffected: number;
 }
