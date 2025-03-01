@@ -1,13 +1,15 @@
 import Image from "next/image";
 import React from "react";
 import { MapPin, Users } from "lucide-react";
+import Link from "next/link";
 
 interface DisasterCardProps {
+  _id:string;
   disasterName: string;
   imageUrl: string | null;
   className: string;
-  district:string;
-  peopleEffected:number;
+  district: string;
+  peopleEffected: number;
   imageClass: string;
   servirity: string;
 }
@@ -18,23 +20,28 @@ enum SERVIRITY {
   HIGH = "high",
 }
 function DisasterCard({
+  _id,
   disasterName,
   imageUrl,
   className,
   imageClass,
   district,
   servirity,
-  peopleEffected
+  peopleEffected,
 }: DisasterCardProps) {
   return (
-    <div className={`w-full max-w-sm aspect-[4/5] rounded-lg overflow-hidden shadow-md ${className}`}>
+    <div
+      className={`w-full max-w-sm aspect-[4/5] rounded-lg overflow-hidden shadow-md ${className}`}
+    >
       <div className="w-full h-2/3 relative">
-        <Image
-          alt={disasterName}
-          fill
-          className={`object-cover ${imageClass}`}
-          src={imageUrl as string}
-        />
+        <Link href={`/disasters/${_id}`}>
+          <Image
+            alt={disasterName}
+            fill
+            className={`object-cover ${imageClass}`}
+            src={imageUrl as string}
+          />
+        </Link>
       </div>
       <div className="p-3 h-1/3 flex flex-col justify-between">
         <h2 className="overflow-x-clip font-normal mt-1">
@@ -54,10 +61,16 @@ function DisasterCard({
           ></span>
         </h2>
         <p className="flex justify-between items-center gap-1 mt-1 font-semibold">
-          <span aria-label="District" className="flex justify-center items-center gap-1">
+          <span
+            aria-label="District"
+            className="flex justify-center items-center gap-1"
+          >
             <MapPin className="w-4 h-4 font-extralight" /> {district}
           </span>
-          <span aria-label="People affected" className="flex justify-center items-center gap-1 font-semibold">
+          <span
+            aria-label="People affected"
+            className="flex justify-center items-center gap-1 font-semibold"
+          >
             <Users className="w-4 h-4 font-extralight ml-1" /> {peopleEffected}
           </span>
         </p>
@@ -65,6 +78,5 @@ function DisasterCard({
     </div>
   );
 }
-
 
 export default DisasterCard;

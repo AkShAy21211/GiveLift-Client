@@ -16,7 +16,7 @@ export const ADMIN_ROUTE = {
 export const DISASTER_ROUTES = {
   report: "/disaster/report",
   list: "/disaster",
-  view: "/disaster/:id",
+  view: "/disaster",
 };
 
 export const USER_ROUTE = {

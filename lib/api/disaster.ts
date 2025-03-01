@@ -17,3 +17,9 @@ export const reportDisasters = async (disaster:FormData) => {
   const response = await api.post(`${DISASTER_ROUTES.report}`,disaster);
   return response;
 };
+
+
+export const getDisasterById = async (_id:string) => {
+  const response = await api.get(`${DISASTER_ROUTES.view}/${_id}`);
+  return response;
+};

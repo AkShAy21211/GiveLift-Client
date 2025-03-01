@@ -1,8 +1,7 @@
 import React from "react";
 import DisasterCard from "./DisasterCard";
 import { getAllDisasters } from "@/lib/api/disaster";
-import heroImage from "@/app/assests/images/hero.jpeg";
-import { Disaster, DisasterReport } from "@/lib/types";
+import { Disaster } from "@/lib/types";
 
 async function fetchLatestDisasters() {
   const response = await getAllDisasters(4,1);
@@ -10,10 +9,12 @@ async function fetchLatestDisasters() {
 }
 async function LatestReport() {
   const respoonse = await fetchLatestDisasters();
+
   return (
     <>
       {respoonse.disasters.map((disaster:  Disaster) => (
         <DisasterCard
+        _id={disaster._id}
           key={disaster._id}
           disasterName={disaster.description}
           servirity={disaster.severity.toLowerCase()}
