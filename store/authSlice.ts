@@ -1,39 +1,28 @@
-"use client";
 
-import { createSlice } from "@reduxjs/toolkit";
-import { AuthState } from "@/lib/types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { AuthState } from '../lib/types/index';
+
+
 
 const initialState: AuthState = {
-  user: null,
+  isAuthenticated: false,
+  role: null,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    loginSuccess: (state, action) => {
-      state.user = {
-        isAuthenticated: true,
-        role: action.payload,
-      };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(state.user));
-      }
+    loginAction: (state, action: PayloadAction<{ role: string }>) => {
+      state.isAuthenticated = true;
+      state.role = action.payload.role;
     },
-    logoutSuccess: (state) => {
-      state.user = {
-        isAuthenticated: false,
-        role: "",
-      };
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("user");
-      }
-    },
-    setUser: (state, action) => {
-      state.user = action.payload;
+    logoutAction: (state) => {
+      state.isAuthenticated = false;
+      state.role = null;
     },
   },
 });
 
-export const { loginSuccess, logoutSuccess, setUser } = authSlice.actions;
+export const { loginAction, logoutAction } = authSlice.actions;
 export default authSlice.reducer;

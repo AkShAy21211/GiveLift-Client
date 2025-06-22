@@ -1,4 +1,4 @@
-"use client"; // ✅ Required for error boundary components in Next.js
+"use client";
 
 import React from "react";
 

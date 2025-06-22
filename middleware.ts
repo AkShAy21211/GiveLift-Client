@@ -1,47 +1,57 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+interface CurrentUser {
+  token: string;
+  role: string; 
+}
 export function middleware(request: NextRequest) {
-  const cookie = request.cookies.get("currentUser");
+  let currentUser: CurrentUser | null = null;
+  const cookie = request.cookies.get("currentUser")?.value;
 
-  let userData = null;
-  if (cookie?.value) {
+  if (cookie) {
     try {
-      userData = JSON.parse(cookie.value);
-    } catch (error) {
-      console.error("Error parsing cookie:", error);
+      currentUser = JSON.parse(cookie);      
+    } catch (e) {
+      console.warn("Invalid cookie data:", e);
+      currentUser = null;
     }
   }
 
-  const isAuthenticated = !!userData; // Check if user data exists
-  const role: string = userData?.role;
+  const isAuthenticated = !!currentUser; // Check if user data exists
   const { pathname } = request.nextUrl; // Extract pathname
 
   // User authentication rules
-  if (!pathname.startsWith("/admin")) {
+  if (!pathname.startsWith("/state-coordinator")) {
     if (
       isAuthenticated &&
-      (pathname === "/sign-in" || pathname === "/sign-up")
+      (pathname === "/login" ||
+        pathname === "/register" ||
+        pathname === "/forgot-password" ||
+        pathname === "/reset-password")
     ) {
-      return NextResponse.redirect(new URL("/", request.url)); // Redirect authenticated users away from auth pages
+      return NextResponse.redirect(new URL("/", request.url));
     }
     if (
       !isAuthenticated &&
-      pathname !== "/sign-in" &&
-      pathname !== "/sign-up" &&
-      pathname !== "/forgot-password" // Allow access to forgot-password
+      pathname !== "/login" &&
+      pathname !== "/register" &&
+      pathname !== "/forgot-password" &&
+      pathname !== "/reset-password"
     ) {
-      return NextResponse.redirect(new URL("/sign-in", request.url)); // Redirect unauthenticated users to sign-in
+      return NextResponse.redirect(new URL("/login", request.url)); // Redirect unauthenticated users to sign-in
     }
   }
 
   // Admin authentication rules
-  if (pathname.startsWith("/admin")) {
-    if (isAuthenticated && pathname === "/admin/sign-in") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url)); // Redirect authenticated admin away from login
+  if (pathname.startsWith("/state-coordinator")) {
+    if (isAuthenticated && pathname === "/login") {
+      return NextResponse.redirect(
+        new URL("/state-coordinator/dashboard", request.url)
+      ); // Redirect authenticated admin away from login
     }
-    if (!isAuthenticated && pathname !== "/admin/sign-in") {
-      return NextResponse.redirect(new URL("/admin/sign-in", request.url)); // Redirect unauthenticated admins to sign-in
+    if (!isAuthenticated && pathname !== "/login") {
+      return NextResponse.redirect(new URL("/login", request.url)); // Redirect unauthenticated admins to sign-in
     }
   }
 
@@ -49,5 +59,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/:path", "/admin/:path*"], // Protect specific routes
+  matcher: [
+    "/",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/state-coordinator/:path*",
+  ], // Match all paths except for API routes
 };

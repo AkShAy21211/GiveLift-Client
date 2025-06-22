@@ -1,13 +1,8 @@
 "use client";
 import { Newsreader } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
-import { Provider } from "react-redux";
-import store from "../store/store";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import { useRouter } from "next/router";
 import { usePathname } from "next/navigation";
+import Providers from "./provider";
 
 const newsReader = Newsreader({
   variable: "--font-geist-mono",
@@ -19,19 +14,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   const pathname = usePathname();
+
+  const isAuthScreen =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
+
+  if (isAuthScreen) {
+    return (
+      <html lang="en">
+        <body className={` ${newsReader.variable} antialiased`}>
+          <Providers>{children}</Providers>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">
       <body className={` ${newsReader.variable} antialiased`}>
-        <main>
-          <Provider store={store}>
-            {pathname.startsWith("/admin") ? <></> : <Header />}
-            <Toaster position="top-center" />
-            {children}
-            {pathname.startsWith("/admin") ? <></> : <Footer />}
-          </Provider>
-        </main>
+        <Providers>
+          <main>{children}</main>
+        </Providers>
       </body>
     </html>
   );
