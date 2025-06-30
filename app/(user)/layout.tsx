@@ -1,49 +1,37 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Phone, User, Menu, X } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/store";
+import { RootState } from "@/store/store";
+import { DonationModal } from "@/components/modal/DonateResourceModal";
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
   const role = useSelector((state: RootState) => state.auth?.role);
-  const isStateCoordinator = role === "state_coordinator";
+  const isGenerealUser = role === "general_user";
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const isAdminSide = pathname?.startsWith("/state-coordinator");
-
-  if (isAdminSide) return null;
   return (
     <header className="bg-[#1A5F7A] text-white p-4">
       <div className="max-w-7xl mx-auto">
         {/* Desktop Layout */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl sm:text-2xl font-bold">Givelift</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">GiveLift</h1>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-3">
-            {role && !isStateCoordinator && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="bg-orange-500 hover:bg-orange-600 text-white border-0"
-              >
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Join As Volunteer
-              </Button>
-            )}
-
             <Button
               variant="secondary"
               size="sm"
@@ -60,24 +48,26 @@ function Header() {
               <Phone className="w-4 h-4 mr-2" />
               Emergency Contact
             </Button>
-
+            <DonationModal />
             {isAuthenticated ? (
               <div className="flex items-center space-x-2 bg-teal-600 px-3 py-2 rounded-lg">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <Link
+                  href={"/profile"}
+                  className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                >
                   <User className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-sm">Ravi Kumar</span>
+                </Link>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link
-                  href="/(auth)/login"
+                  href="/login"
                   className="text-sm font-medium bg-white text-black px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
                 >
                   Login
                 </Link>
                 <Link
-                  href="/(auth)/register"
+                  href="/register"
                   className="text-sm font-medium bg-white text-black px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
                 >
                   Register
@@ -104,18 +94,6 @@ function Header() {
         {isMobileMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-teal-600">
             <div className="flex flex-col space-y-3 pt-4">
-              {/* User Profile - Mobile */}
-
-              {/* Action Buttons - Mobile */}
-              <Button
-                variant="secondary"
-                size="sm"
-                className="bg-orange-500 hover:bg-orange-600 text-white border-0 w-full justify-start"
-              >
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Join As Volunteer
-              </Button>
-
               <Button
                 variant="secondary"
                 size="sm"
@@ -133,24 +111,28 @@ function Header() {
                 Emergency Contact
               </Button>
 
+              <DonationModal />
+
               {/* Auth Links - Mobile */}
               {isAuthenticated ? (
                 <div className="flex items-center space-x-2 bg-teal-600 px-3 py-2 rounded-lg">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <Link
+                    href={"/profile"}
+                    className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                  >
                     <User className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm">Ravi Kumar</span>
+                  </Link>
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2 pt-2">
                   <Link
-                    href="/(auth)/login"
+                    href="/login"
                     className="text-sm font-medium bg-white text-black px-3 py-2 rounded-md hover:bg-gray-100 transition-colors text-center"
                   >
                     Login
                   </Link>
                   <Link
-                    href="/(auth)/register"
+                    href="/register"
                     className="text-sm font-medium bg-white text-black px-3 py-2 rounded-md hover:bg-gray-100 transition-colors text-center"
                   >
                     Register
@@ -165,4 +147,24 @@ function Header() {
   );
 }
 
-export default Header;
+function Footer() {
+  return (
+    <footer className="w-full bg-[#1A5F7A] py-4 text-center text-sm text-white border-t">
+      © {new Date().getFullYear()} GiveLift. All rights reserved.
+    </footer>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <>
+      <Header />
+      {children}
+      <Footer />
+    </>
+  );
+}

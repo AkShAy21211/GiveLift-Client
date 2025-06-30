@@ -8,15 +8,19 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { loginSchema } from "@/lib/validation";
-import { loginHandler } from "../../../lib/api/auth";
 import { Eye, EyeOff } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDispatch } from "react-redux";
 import { loginAction } from "@/store/authSlice";
+import { useRouter } from "next/navigation";
+import { ROLES } from "@/lib/types";
+import { loginHandler } from "@/app/(auth)/actions";
+
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<string>("regular");
   const dispatch = useDispatch();
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -40,6 +44,14 @@ function LoginForm() {
         ...data,
       });
       dispatch(loginAction({ role: response.role }));
+
+      if (response.role === ROLES.STATE_COORDINATOR) {
+        router.push("/state/dashboard");
+      } else if (response.role === ROLES.DISTRICT_COORDINATOR) {
+        router.push("/district/dashboard");
+      } else {
+        router.push("/");
+      }
       toast.success(response.message, {
         style: {
           backgroundColor: "green",
@@ -49,8 +61,8 @@ function LoginForm() {
 
       reset();
     } catch (error: any) {
-      console.log('fdfdfdfdfdfdfd',error);
-      toast.error( error?.response?.data?.message, {
+      console.log("fdfdfdfdfdfdfd", error);
+      toast.error(error?.response?.data?.message, {
         style: {
           backgroundColor: "red",
           color: "white",

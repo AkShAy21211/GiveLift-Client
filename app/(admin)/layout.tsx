@@ -1,5 +1,5 @@
 "use client";
-
+import { redirect } from "next/navigation";
 import React, { useState } from "react";
 import {
   Menu,
@@ -17,7 +17,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { persistor, RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutAction } from "@/store/authSlice";
+import { toast } from "sonner";
+import { ROLES } from "@/lib/types";
 
 // Types
 interface NavItem {
@@ -39,30 +44,23 @@ interface MobileSidebarProps {
 interface DesktopSidebarProps {
   navItems: NavItem[];
   currentPath: string;
+  role: string;
+  logout: () => void;
   onNavClick: (href: string) => void;
 }
 
 interface MobileSidebarContentProps extends DesktopSidebarProps {
   isOpen: boolean;
+  role: string;
   onClose: () => void;
+  logout: () => void;
 }
-
-// Mock Link component (in real app, this would be from Next.js)
-const Link: React.FC<{
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-}> = ({ href, children, className, onClick }) => (
-  <a href={href} className={className} onClick={onClick}>
-    {children}
-  </a>
-);
 
 // Desktop Sidebar Component
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   navItems,
   currentPath,
+  logout,
   onNavClick,
 }) => (
   <div className="hidden lg:flex lg:flex-shrink-0">
@@ -74,8 +72,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">DisasterResponse</h1>
-            <p className="text-xs text-slate-400">Admin Portal</p>
+            <h1 className="text-xl font-bold text-white">Givelift</h1>
           </div>
         </div>
       </div>
@@ -105,7 +102,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
         {/* User Section */}
         <div className="px-4 pt-6 border-t border-slate-700">
-          <div className="flex items-center space-x-3 p-4 rounded-xl bg-slate-700/50 mb-4">
+          {/* <div className="flex items-center space-x-3 p-4 rounded-xl bg-slate-700/50 mb-4">
             <Avatar className="w-10 h-10">
               <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-white font-medium text-sm">
                 AU
@@ -116,9 +113,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               <p className="text-xs text-slate-400">System Administrator</p>
             </div>
             <ChevronDown className="h-4 w-4 text-slate-400" />
-          </div>
+          </div> */}
 
           <Button
+            onClick={logout}
             variant="ghost"
             className="w-full justify-start text-slate-300 hover:text-white hover:bg-red-500/20 transition-colors"
           >
@@ -135,6 +133,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 const MobileSidebar: React.FC<MobileSidebarContentProps> = ({
   isOpen,
   onClose,
+  logout,
   navItems,
   currentPath,
   onNavClick,
@@ -151,8 +150,7 @@ const MobileSidebar: React.FC<MobileSidebarContentProps> = ({
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">DisasterResponse</h1>
-            <p className="text-xs text-slate-400">Admin Portal</p>
+            <h1 className="text-xl font-bold text-white">Givelift</h1>
           </div>
         </div>
         <Button
@@ -190,7 +188,7 @@ const MobileSidebar: React.FC<MobileSidebarContentProps> = ({
 
         {/* User Section */}
         <div className="px-4 pt-6 border-t border-slate-700">
-          <div className="flex items-center space-x-3 p-4 rounded-xl bg-slate-700/50 mb-4">
+          {/* <div className="flex items-center space-x-3 p-4 rounded-xl bg-slate-700/50 mb-4">
             <Avatar className="w-10 h-10">
               <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-white font-medium text-sm">
                 AU
@@ -200,9 +198,10 @@ const MobileSidebar: React.FC<MobileSidebarContentProps> = ({
               <p className="text-sm font-medium text-white">Admin User</p>
               <p className="text-xs text-slate-400">System Administrator</p>
             </div>
-          </div>
+          </div> */}
 
           <Button
+            onClick={logout}
             variant="ghost"
             className="w-full justify-start text-slate-300 hover:text-white hover:bg-red-500/20 transition-colors"
           >
@@ -218,41 +217,84 @@ const MobileSidebar: React.FC<MobileSidebarContentProps> = ({
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [currentPath, setCurrentPath] = useState<string>("/admin");
-  const pathname = usePathname();
+  const dispatch = useDispatch();
+  const role = useSelector((state: RootState) => state.auth?.role) || "";
 
-  const isAuthScreen = pathname.startsWith("/state-coordinator/login");
+  const handleLogout = () => {
+    try {
+      dispatch(logoutAction());
+      persistor.purge();
+      localStorage.removeItem("auth");
+    } catch (error) {
+      console.log(error);
 
-  if (isAuthScreen) {
-    return <>{children}</>;
-  }
-
-  const navItems: NavItem[] = [
+      toast.error("Something went wrong");
+    }
+  };
+  const state_coordinator_nav: NavItem[] = [
     {
       name: "Dashboard",
-      href: "/admin",
+      href: "/state/dashboard",
+      icon: <Home className="h-5 w-5" />,
+      gradient: "from-blue-500 to-blue-600",
+    },
+    // {
+    //   name: "Disasters",
+    //   href: "/state/disasters",
+    //   icon: <AlertCircle className="h-5 w-5" />,
+    //   gradient: "from-red-500 to-red-600",
+    // },
+    {
+      name: "District Coordinators",
+      href: "/state/coordinators",
+      icon: <Users className="h-5 w-5" />,
+      gradient: "from-green-500 to-green-600",
+    },
+    // {
+    //   name: "Users",
+    //   href: "/admin/users",
+    //   icon: <Users className="h-5 w-5" />,
+    //   gradient: "from-green-500 to-green-600",
+    // },
+    // {
+    //   name: "Settings",
+    //   href: "/state/settings",
+    //   icon: <Settings className="h-5 w-5" />,
+    //   gradient: "from-purple-500 to-purple-600",
+    // },
+  ];
+
+  const district_coordinator_nav: NavItem[] = [
+    {
+      name: "Dashboard",
+      href: "/district/dashboard",
       icon: <Home className="h-5 w-5" />,
       gradient: "from-blue-500 to-blue-600",
     },
     {
-      name: "Disasters",
-      href: "/admin/disasters",
+      name: "Report Disaster",
+      href: "/district/report-disaster",
       icon: <AlertCircle className="h-5 w-5" />,
       gradient: "from-red-500 to-red-600",
     },
-    {
-      name: "Users",
-      href: "/admin/users",
-      icon: <Users className="h-5 w-5" />,
-      gradient: "from-green-500 to-green-600",
-    },
-    {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: <Settings className="h-5 w-5" />,
-      gradient: "from-purple-500 to-purple-600",
-    },
+    // {
+    //   name: "Users",
+    //   href: "/admin/users",
+    //   icon: <Users className="h-5 w-5" />,
+    //   gradient: "from-green-500 to-green-600",
+    // },
+    // {
+    //   name: "Settings",
+    //   href: "/state/settings",
+    //   icon: <Settings className="h-5 w-5" />,
+    //   gradient: "from-purple-500 to-purple-600",
+    // },
   ];
 
+  const navItems =
+    role === ROLES.STATE_COORDINATOR
+      ? state_coordinator_nav
+      : district_coordinator_nav;
   const handleNavClick = (href: string): void => {
     setCurrentPath(href);
     setSidebarOpen(false);
@@ -262,6 +304,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Desktop Sidebar */}
       <DesktopSidebar
+        role={role}
+        logout={handleLogout}
         navItems={navItems}
         currentPath={currentPath}
         onNavClick={handleNavClick}
@@ -269,6 +313,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Mobile Sidebar */}
       <MobileSidebar
+        role={role}
+        logout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         navItems={navItems}
@@ -279,7 +325,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-40 flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 shadow-sm lg:justify-end">
+        <header className="sticky top-0 z-40 flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 shadow-md lg:justify-end">
           <Button
             variant="ghost"
             size="icon"
@@ -291,7 +337,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
           {/* Header Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
+            {/* <Button variant="ghost" size="icon">
               <Search className="h-5 w-5" />
             </Button>
 
@@ -303,9 +349,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 3
               </Badge>
-            </Button>
+            </Button> */}
 
-            <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
+            {/* <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
               <Avatar className="w-8 h-8">
                 <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-white font-medium text-sm">
                   AU
@@ -320,7 +366,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </div>
               </div>
               <ChevronDown className="h-4 w-4 text-slate-400" />
-            </div>
+            </div> */}
           </div>
         </header>
 

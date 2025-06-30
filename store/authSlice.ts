@@ -1,7 +1,5 @@
-
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthState } from '../lib/types/index';
-
+import { AuthState } from "../lib/types/index";
 
 
 const initialState: AuthState = {
@@ -20,6 +18,7 @@ const authSlice = createSlice({
     logoutAction: (state) => {
       state.isAuthenticated = false;
       state.role = null;
+
     },
   },
 });

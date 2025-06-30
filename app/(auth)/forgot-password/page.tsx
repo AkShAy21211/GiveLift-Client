@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { forgortPasswordHandler } from "@/lib/api/auth";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { forgortPasswordHandler } from "../actions";
 
 type ForgotPasswordFormValues = {
   email: string;

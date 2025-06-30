@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import {
   Activity,
   AlertCircle,
-  CheckCircle2,
-  Clock,
   Users,
   TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+
 
 export default function DashboardPage() {
   // Mock data - in a real app, this would come from your API
@@ -56,7 +56,7 @@ export default function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">District Coordinator Dashboard</h1>
+        <h1 className="text-3xl font-bold">State Coordinator Dashboard</h1>
         <div className="flex items-center justify-between mt-2">
           <h2 className="text-xl text-gray-600">Ernakulam District</h2>
           <div className="flex items-center space-x-2">
@@ -85,61 +85,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Disasters Section */}
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">My District Disasters</h2>
-          <Button className="bg-primary hover:bg-primary-dark text-white">
-            Report New Disaster
-          </Button>
-        </div>
-
-        {/* Disasters List */}
-        <div className="space-y-4">
-          {disasters.map((disaster) => (
-            <Card key={disaster.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{disaster.title}</CardTitle>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                      <span>Reported by {disaster.reportedBy}</span>
-                      <span>•</span>
-                      <span>{disaster.time}</span>
-                      <span>•</span>
-                      <Badge
-                        variant="outline"
-                        className={
-                          disaster.status === "Active"
-                            ? "border-rose-200 bg-rose-50 text-rose-600"
-                            : disaster.status === "Resolving"
-                            ? "border-amber-200 bg-amber-50 text-amber-600"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-600"
-                        }
-                      >
-                        {disaster.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 mb-4">{disaster.description}</p>
-                <div className="flex space-x-3">
-                  <Button variant="outline" size="sm">
-                    Update Status
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    {disaster.status === "Active"
-                      ? "Manage Resources"
-                      : "View Progress"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+  
     </div>
   );
 }

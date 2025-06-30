@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { resetPasswordHandler } from "@/lib/api/auth";
 import { resetPasswordSchema } from "@/lib/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader, LoaderCircle } from "lucide-react";
+import { resetPasswordHandler } from "../actions";
 
 type ResetPasswordFormValues = {
   password: string;
