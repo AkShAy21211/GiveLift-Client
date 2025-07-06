@@ -52,6 +52,7 @@ A full-stack, real-time disaster response platform built using **Next.js (App Ro
 ---
 
 ## 📁 Folder Structure (App Router)\
+```
 client/
 ├── app/ # Main App Router directory
 │ ├── (admin)/ # Pages for state & district coordinators
@@ -76,4 +77,4 @@ client/
 ├── next.config.ts # Next.js config
 ├── .env # Environment variables
 └── README.md # You're here
-
+```
