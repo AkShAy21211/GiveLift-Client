@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 Disaster Management & Anti-Fake News Platform
 
-## Getting Started
+A full-stack, real-time disaster response platform built using **Next.js (App Router)** with role-based access for **general users, district coordinators, and state coordinators**. The platform enables verified communication, emergency resource coordination, and community-driven fake news reporting.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📌 Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🚨 Disaster Management
+- Citizens can report live disasters with location and severity
+- Coordinators can monitor, update, and respond to incidents
+- Live map with location-tagged disaster markers
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🤝 Volunteer & Donation System
+- Toggle volunteer availability & get matched with needs
+- Pledge and track donations (resources or monetary)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ❌ Anti-Fake News System
+- Users can report suspicious news/rumors
+- Coordinators verify & broadcast official corrections
+- Verified Contributor badges for trusted users
 
-## Learn More
+### 💬 Real-Time Communication
+- Role-based chat (Socket.IO)
+- Instant push/email notifications
+- Highlighted messages for official broadcasts
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 👥 User Roles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role               | Description |
+|--------------------|-------------|
+| `general_user`     | Citizens who report disasters, volunteer, donate, and flag fake news |
+| `district_coordinator` | Local admin who manages disasters, fact-checks rumors, coordinates local volunteers/resources |
+| `state_coordinator`    | Oversees all districts, issues official announcements, manages state-wide resources |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🧱 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Layer         | Tech                             |
+|---------------|----------------------------------|
+| Frontend      | **Next.js (App Router)**, Tailwind CSS |
+| Backend       | **Node.js + Express (API Layer)** |
+| Database      | **MongoDB (Mongoose)**           |
+| Real-Time     | **Socket.IO**                    |
+| Auth & Roles  | **JWT Authentication**           |
+| Maps & Geo    | **Google Maps API**              |
+| Hosting       | Vercel / Render                  |
+
+---
+
+## 📁 Folder Structure (App Router)
+
