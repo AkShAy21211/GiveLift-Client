@@ -25,41 +25,41 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  Coordinator,
   deactivateCoordinator,
   restoreCoordinator,
-} from "./actions";
+} from "@/lib/api/coordinator";
 import CoordinatorForm from "./coordinator-form";
+import { User } from "@/lib/types";
 
 interface CoordinatorsClientProps {
-  initialCoordinators: Coordinator[];
+  initialCoordinators: User[];
 }
 
 export default function CoordinatorsClient({
   initialCoordinators,
 }: CoordinatorsClientProps) {
-  const [coordinators, setCoordinators] =
-    useState<Coordinator[]>(initialCoordinators);
+  const [coordinators, setCoordinators] = useState<User[]>(initialCoordinators);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-  const [currentCoordinator, setCurrentCoordinator] =
-    useState<Coordinator | null>(null);
+  const [currentCoordinator, setCurrentCoordinator] = useState<User | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleEditClick = (coordinator: Coordinator) => {
+  const handleEditClick = (coordinator: User) => {
     setCurrentCoordinator(coordinator);
     setEditDialogOpen(true);
   };
 
-  const handleDeleteClick = (coordinator: Coordinator) => {
+  const handleDeleteClick = (coordinator: User) => {
     setCurrentCoordinator(coordinator);
     setDeleteDialogOpen(true);
   };
 
-  const handleRestoreClick = (coordinator: Coordinator) => {
+  const handleRestoreClick = (coordinator: User) => {
     setCurrentCoordinator(coordinator);
     setRestoreDialogOpen(true);
   };
@@ -71,15 +71,16 @@ export default function CoordinatorsClient({
         const result = await deactivateCoordinator(currentCoordinator._id);
 
         if (result.success) {
-          // Optimistically update the UI
           setCoordinators((prev) =>
             prev.map((c) =>
-              c._id === currentCoordinator._id ? { ...c, isActive: false } : c
+              c._id === currentCoordinator._id
+                ? { ...c, isActive: false, isDeleted: true }
+                : c
             )
           );
           toast.success(result.message);
           setDeleteDialogOpen(false);
-          router.refresh(); // Refresh server data
+          router.refresh();
         } else {
           toast.error(result.message);
         }
@@ -97,13 +98,13 @@ export default function CoordinatorsClient({
         const result = await restoreCoordinator(currentCoordinator._id);
 
         if (result.success) {
-          // Optimistically update the UI
           setCoordinators((prev) =>
             prev.map((c) =>
-              c._id === currentCoordinator._id ? { ...c, isActive: true } : c
+              c._id === currentCoordinator._id
+                ? { ...c, isActive: true, isDeleted: false }
+                : c
             )
           );
-
           toast.success(result.message);
           setRestoreDialogOpen(false);
           router.refresh();
@@ -125,7 +126,7 @@ export default function CoordinatorsClient({
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex   justify-end mb-6">
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add New Coordinator
@@ -153,10 +154,8 @@ export default function CoordinatorsClient({
                 </TableCell>
                 <TableCell>{coordinator.email}</TableCell>
                 <TableCell>{coordinator.phone}</TableCell>
-                <TableCell>{coordinator.district || "N/A"}</TableCell>
-                <TableCell>
-                  {(coordinator.state as any)?.name || "N/A"}
-                </TableCell>
+                <TableCell>{coordinator.address?.district || "N/A"}</TableCell>
+                <TableCell>{coordinator.address?.state || "N/A"}</TableCell>
                 <TableCell>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${

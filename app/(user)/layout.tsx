@@ -4,23 +4,40 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Phone, User, Menu, X } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
-import { usePathname } from "next/navigation";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { usePathname, useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { persistor, RootState } from "@/store/store";
 import { DonationModal } from "@/components/modal/DonateResourceModal";
-
+import { logoutHandler } from "@/lib/api/auth";
+import { logoutAction } from "@/store/authSlice";
+import { toast } from "sonner";
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
   const role = useSelector((state: RootState) => state.auth?.role);
-  const isGenerealUser = role === "general_user";
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutHandler();
+
+      dispatch(logoutAction());
+      persistor.purge();
+      localStorage.removeItem("auth");
+      router.push("/login");
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Something went wrong");
+    }
+  };
   return (
     <header className="bg-[#1A5F7A] text-white p-4">
       <div className="max-w-7xl mx-auto">
@@ -48,16 +65,18 @@ function Header() {
               <Phone className="w-4 h-4 mr-2" />
               Emergency Contact
             </Button>
-            <DonationModal />
+            {/* <DonationModal /> */}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2 bg-teal-600 px-3 py-2 rounded-lg">
-                <Link
-                  href={"/profile"}
-                  className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
-                >
-                  <User className="w-4 h-4 text-white" />
-                </Link>
-              </div>
+              <>
+                <div className="flex items-center space-x-2 bg-teal-600 px-3 py-2 rounded-lg">
+                  <Link
+                    href={"/profile"}
+                    className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                  >
+                    <User className="w-4 h-4 text-white" />
+                  </Link>
+                </div>
+              </>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link

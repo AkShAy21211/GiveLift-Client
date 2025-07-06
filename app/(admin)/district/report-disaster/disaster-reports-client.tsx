@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ import {
   DisasterReport,
   SEVERITY_LEVELS,
   updateDisasterReportStatus,
-} from "./actions";
+} from "@/lib/api/disaster";
 import DisasterReportForm from "./disaster-report-form";
 
 interface DisasterReportsClientProps {
@@ -66,7 +65,7 @@ export default function DisasterReportsClient({
   // Filter reports based on severity and status
   const filteredReports = reports.filter((report) => {
     const severityMatch =
-      filterSeverity === "all" || report.severityLevel === filterSeverity;
+      filterSeverity === "all" || report.severity === filterSeverity;
     const statusMatch =
       filterStatus === "all" || report.status === filterStatus;
     return severityMatch && statusMatch;
@@ -186,14 +185,17 @@ export default function DisasterReportsClient({
       {/* Reports Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredReports.map((report) => {
-          const severityInfo = getSeverityInfo(report.severityLevel);
+          const severityInfo = getSeverityInfo(report.severity);
 
           return (
-            <Card key={report._id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={report._id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg font-semibold text-gray-900">
-                    {report.place}
+                    {report.address}
                   </CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -218,7 +220,10 @@ export default function DisasterReportsClient({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              handleStatusUpdate(report._id, "verified")
+                              handleStatusUpdate(
+                                report?._id as string,
+                                "verified"
+                              )
                             }
                             disabled={report.status === "verified"}
                           >
@@ -226,7 +231,10 @@ export default function DisasterReportsClient({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              handleStatusUpdate(report._id, "responding")
+                              handleStatusUpdate(
+                                report?._id as string,
+                                "responding"
+                              )
                             }
                             disabled={report.status === "responding"}
                           >
@@ -234,7 +242,10 @@ export default function DisasterReportsClient({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              handleStatusUpdate(report._id, "resolved")
+                              handleStatusUpdate(
+                                report?._id as string,
+                                "resolved"
+                              )
                             }
                           >
                             Mark as Resolved
@@ -251,10 +262,10 @@ export default function DisasterReportsClient({
                   </Badge>
                   <Badge
                     variant="outline"
-                    className={getStatusColor(report.status)}
+                    className={getStatusColor(report?.status as string)}
                   >
-                    {report.status?.charAt(0).toUpperCase() +
-                      report.status?.slice(1)}
+                    {(report?.status?.charAt(0).toUpperCase() as string) +
+                      report?.status?.slice(1)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -266,22 +277,17 @@ export default function DisasterReportsClient({
                 </div>
 
                 <div className="flex items-center text-sm text-gray-600">
-                  <Users className="w-4 h-4 mr-1" />
-                  {report.peopleAffected.toLocaleString()} people affected
-                </div>
-
-                <div className="flex items-center text-sm text-gray-600">
                   <MapPin className="w-4 h-4 mr-1" />
-                  {report?.place}
+                  {report?.address}
                 </div>
 
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(report.createdAt).toLocaleDateString()}
+                  {new Date(report?.createdAt as string).toLocaleDateString()}
                 </div>
 
                 <p className="text-sm text-gray-700 line-clamp-2">
-                  {report.situationDescription}
+                  {report.description}
                 </p>
 
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -364,8 +370,8 @@ export default function DisasterReportsClient({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-900">Location</h4>
-                  <p className="text-gray-600">{selectedReport.place}</p>
+                  <h4 className="font-medium text-gray-900">Address</h4>
+                  <p className="text-gray-600">{selectedReport.address}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Disaster Type</h4>
@@ -374,30 +380,29 @@ export default function DisasterReportsClient({
                 <div>
                   <h4 className="font-medium text-gray-900">Severity Level</h4>
                   <Badge
-                    className={
-                      getSeverityInfo(selectedReport.severityLevel).color
-                    }
+                    className={getSeverityInfo(selectedReport.severity).color}
                   >
-                    {getSeverityInfo(selectedReport.severityLevel).label}
+                    {getSeverityInfo(selectedReport.severity).label}
                   </Badge>
                 </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">People Affected</h4>
-                  <p className="text-gray-600">
-                    {selectedReport.peopleAffected.toLocaleString()}
-                  </p>
-                </div>
+
                 <div>
                   <h4 className="font-medium text-gray-900">Status</h4>
-                  <Badge className={getStatusColor(selectedReport.status)}>
-                    {selectedReport.status?.charAt(0).toUpperCase() +
+                  <Badge
+                    className={getStatusColor(selectedReport?.status as string)}
+                  >
+                    {(selectedReport.status
+                      ?.charAt(0)
+                      .toUpperCase() as string) +
                       selectedReport.status?.slice(1)}
                   </Badge>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Reported Date</h4>
                   <p className="text-gray-600">
-                    {new Date(selectedReport.createdAt).toLocaleDateString()}
+                    {new Date(
+                      selectedReport?.createdAt as string
+                    ).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -406,9 +411,7 @@ export default function DisasterReportsClient({
                 <h4 className="font-medium text-gray-900 mb-2">
                   Situation Description
                 </h4>
-                <p className="text-gray-600">
-                  {selectedReport.situationDescription}
-                </p>
+                <p className="text-gray-600">{selectedReport.description}</p>
               </div>
 
               <div>

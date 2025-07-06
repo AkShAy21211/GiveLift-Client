@@ -10,8 +10,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader, LoaderCircle } from "lucide-react";
-import { resetPasswordHandler } from "../actions";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { resetPasswordHandler } from "@/lib/api/auth";
 
 type ResetPasswordFormValues = {
   password: string;

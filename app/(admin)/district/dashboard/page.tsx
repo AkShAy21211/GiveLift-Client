@@ -1,14 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Activity,
-  AlertCircle,
-  Users,
-  TrendingUp,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
-
+import { Activity, AlertCircle, Users, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
   // Mock data - in a real app, this would come from your API
@@ -28,27 +19,6 @@ export default function DashboardPage() {
       title: "Response Rate",
       value: "89%",
       icon: <TrendingUp className="h-5 w-5" />,
-    },
-  ];
-
-  const disasters = [
-    {
-      id: 1,
-      title: "Urban Flooding - Kakkanad Area",
-      reportedBy: "me",
-      time: "3 hours ago",
-      status: "Active",
-      description:
-        "Heavy rainfall causing water logging in IT corridor. Traffic severely affected.",
-    },
-    {
-      id: 2,
-      title: "Power Outage - Kaloor",
-      reportedBy: "me",
-      time: "6 hours ago",
-      status: "Resolving",
-      description:
-        "Transformer failure affecting 200+ households. KSEB team deployed.",
     },
   ];
 
@@ -84,8 +54,6 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
-
-  
     </div>
   );
 }

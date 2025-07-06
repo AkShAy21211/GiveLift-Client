@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useActionState, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,29 +26,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Users, AlertTriangle, Package, Loader2 } from "lucide-react";
-import "react-country-state-city/dist/react-country-state-city.css";
+import { AlertTriangle, Package, Loader2 } from "lucide-react";
 import {
   createDisasterReport,
-  // updateDisasterReport,
-  DISASTER_TYPES,
-  SEVERITY_LEVELS,
-  RESOURCE_TYPES,
-  DisasterReport,
   updateeDisasterReport,
   disasterReportSchema,
-} from "./actions";
-import { SEVERITY } from "@/lib/types";
-
-// Google Places API types
-declare global {
-  interface Window {
-    google: any;
-    initAutocomplete: () => void;
-  }
-}
-
-
+} from "@/lib/api/disaster";
+import { DISASTER_TYPES, DisasterReport, RESOURCE_TYPES, SEVERITY, SEVERITY_LEVELS } from "@/lib/types";
+import { getDistricts } from "@/lib/api/disaster";
 
 interface DisasterReportFormProps {
   mode: "create" | "edit";
@@ -67,28 +52,29 @@ export default function DisasterReportForm({
     disaster?.resourcesNeeded || []
   );
   const [submitting, setSubmitting] = useState(false);
-  const [countryId, setCountryId] = useState<number>(
-    disaster?.country?.id || 0
-  );
-  const [stateId, setStateId] = useState<number>(disaster?.state?.id || 0);
   const [autocomplete, setAutocomplete] = useState<any>(null);
-  const [selectedPlace, setSelectedPlace] = useState<any>(null);
+  const [districts, setDistricts] = useState<{ _id: string; name: string }[]>(
+    []
+  );
   const placeInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof disasterReportSchema>>({
     resolver: zodResolver(disasterReportSchema),
     defaultValues: {
-      place: disaster?.place || "",
-      country: disaster?.country || undefined,
-      state: disaster?.state || undefined,
-      district: disaster?.district || undefined,
+      address: disaster?.address || "",
+      districtId: disaster?.districtId || "",
       disasterType: disaster?.disasterType || undefined,
-      severityLevel: disaster?.severityLevel || undefined,
-      peopleAffected: disaster?.peopleAffected || 0,
-      situationDescription: disaster?.situationDescription || "",
+      severity: disaster?.severity || undefined,
+      description: disaster?.description || "",
       resourcesNeeded: disaster?.resourcesNeeded || [],
     },
   });
+
+  useEffect(() => {
+    getDistricts()
+      .then(setDistricts)
+      .catch(() => toast.error("Failed to load districts"));
+  }, []);
 
   // Initialize Google Places Autocomplete
   useEffect(() => {
@@ -97,7 +83,7 @@ export default function DisasterReportForm({
         const options = {
           types: ["establishment", "geocode"],
           componentRestrictions: {
-            country:"in"
+            country: "in",
           },
           fields: ["place_id", "formatted_address", "name", "geometry"],
         };
@@ -110,8 +96,7 @@ export default function DisasterReportForm({
         autocompleteInstance.addListener("place_changed", () => {
           const place = autocompleteInstance.getPlace();
           if (place && place.formatted_address) {
-            setSelectedPlace(place);
-            form.setValue("place", place.formatted_address);
+            form.setValue("address", place.formatted_address);
           }
         });
 
@@ -120,55 +105,31 @@ export default function DisasterReportForm({
     };
 
     // Load Google Maps API if not already loaded
-    if (!window.google) {
+    if (!window.google && !window._googleMapsLoaded) {
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?libraries=places&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
       script.async = true;
       script.defer = true;
-      script.onload = initializeAutocomplete;
+
+      script.onload = () => {
+        window._googleMapsLoaded = true;
+        initializeAutocomplete();
+      };
+
       document.head.appendChild(script);
-    } else {
+    } else if (window.google) {
       initializeAutocomplete();
     }
 
     return () => {
       if (autocomplete) {
         window.google.maps.event.clearInstanceListeners(autocomplete);
+        setAutocomplete(null);
       }
     };
-  }, [stateId, countryId, form]);
+  }, [form]);
 
-  // Server Action for form submission
-    const [createState, createAction] = useActionState(createDisasterReport, null);
-    const [updateState, updateAction] = useActionState(
-      disaster
-        ? updateeDisasterReport.bind(null, disaster._id)
-        : createDisasterReport,
-      null
-    );
-
-    
-  const currentAction = mode === "create" ? createAction : updateAction;
-  const currentState = mode === "create" ? createState : updateState;
-
-  // Handle successful form submission
-  useEffect(() => {
-    if (currentState?.success) {
-      toast.success(currentState.message);
-      if (mode === "create") {
-        form.reset();
-        setSelectedResources([]);
-        setCountryId(0);
-        setStateId(0);
-        setSelectedPlace(null);
-      }
-      setSubmitting(false);
-      onSuccess();
-    } else if (currentState?.message && !currentState?.success) {
-      toast.error(currentState.message);
-      setSubmitting(false);
-    }
-  }, [currentState, form, onSuccess, mode]);
+  const isEditing = mode === "edit";
 
   // Handle resource selection
   const handleResourceToggle = (resource: string) => {
@@ -184,21 +145,28 @@ export default function DisasterReportForm({
 
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof disasterReportSchema>) => {
-    setSubmitting(true);
-    currentAction(data as any);
-  };
+    try {
+      if (!isEditing) {
+        const response = await createDisasterReport(data as any);
+        if (response) {
+          toast.success("Disaster report created successfully");
+        } else {
+          const response = await updateeDisasterReport(
+            disaster?._id as string,
+            data as any
+          );
+          if (response) {
+            toast.success("Disaster report updated successfully");
+          }
+        }
+      }
+      onSuccess();
+    } catch (error) {
+      console.log(error);
 
-  // Set initial country/state IDs when editing
-  useEffect(() => {
-    if (mode === "edit" && disaster) {
-      if (disaster.country) {
-        setCountryId(disaster.country.id);
-      }
-      if (disaster.state) {
-        setStateId(disaster.state.id);
-      }
+      toast.error("Failed to create disaster report");
     }
-  }, [mode, disaster]);
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -214,7 +182,6 @@ export default function DisasterReportForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Location Section */}
-            <div className="space-y-4"></div>
 
             {/* Disaster Information Section */}
             <div className="space-y-4">
@@ -222,6 +189,34 @@ export default function DisasterReportForm({
                 <AlertTriangle className="h-4 w-4" />
                 <h3 className="text-lg font-semibold">Disaster Information</h3>
               </div>
+              <FormField
+                control={form.control}
+                name="districtId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {districts.map((district) => (
+                          <SelectItem key={district._id} value={district._id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -251,9 +246,10 @@ export default function DisasterReportForm({
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="place"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Specific Location/Address</FormLabel>
@@ -266,17 +262,16 @@ export default function DisasterReportForm({
                       />
                     </FormControl>
                     <FormDescription>
-                      {!stateId || !countryId
-                        ? "Please select country and state first to enable location search"
-                        : "Start typing to search for specific places within the selected district"}
+                      Start typing to search for specific places
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="severityLevel"
+                name="severity"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Severity Level</FormLabel>
@@ -305,32 +300,7 @@ export default function DisasterReportForm({
 
               <FormField
                 control={form.control}
-                name="peopleAffected"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Number of People Affected
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="situationDescription"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Situation Description</FormLabel>

@@ -7,20 +7,25 @@ interface CurrentUser {
   role: string;
 }
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
 // Default dashboards for each role
 const DASHBOARD_PATHS: Record<string, string> = {
-  [ROLES.GENERAL_USER]: "/",
+  [ROLES.GENERAL_USER]: "/home",
   [ROLES.DISTRICT_COORDINATOR]: "/district/dashboard",
   [ROLES.STATE_COORDINATOR]: "/state/dashboard",
 };
 
 // Hierarchical access (higher roles can access lower role routes too)
 const ROLE_ACCESS_PREFIXES: Record<string, string[]> = {
-  [ROLES.GENERAL_USER]: ["/"],
-  [ROLES.DISTRICT_COORDINATOR]: ["/", "/district"],
-  [ROLES.STATE_COORDINATOR]: ["/", "/district", "/state"],
+  [ROLES.GENERAL_USER]: ["/home"],
+  [ROLES.DISTRICT_COORDINATOR]: ["/home", "/district"],
+  [ROLES.STATE_COORDINATOR]: ["/home", "/district", "/state"],
 };
 
 function isPublicPath(path: string) {
@@ -29,7 +34,7 @@ function isPublicPath(path: string) {
 
 function getCurrentUser(request: NextRequest): CurrentUser | null {
   const cookie = request.cookies.get("currentUser")?.value;
-  
+
   if (!cookie) return null;
 
   try {
@@ -45,23 +50,33 @@ export function middleware(request: NextRequest) {
   const currentUser = getCurrentUser(request);
   const isAuthenticated = !!currentUser;
 
-  // 🚫 Unauthenticated trying to access protected page
+  // 1️⃣ If user is not authenticated and trying to access protected route
   if (!isAuthenticated && !isPublicPath(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // ✅ Authenticated but trying to access public page (redirect to dashboard)
+  // 2️⃣ If authenticated and hitting a public route → redirect to dashboard
   if (isAuthenticated && isPublicPath(pathname)) {
     const dashboardPath = DASHBOARD_PATHS[currentUser.role];
     return NextResponse.redirect(new URL(dashboardPath || "/", request.url));
   }
 
-  // 🔐 Authenticated and trying to access protected path
+  // 3️⃣ 🔁 If hitting `/` root, redirect to role-specific dashboard
+  if (isAuthenticated && pathname === "/") {
+    const dashboardPath = DASHBOARD_PATHS[currentUser.role];
+
+    // 🛑 Prevent loop: Only redirect if current path is not already the dashboard
+    if (pathname !== dashboardPath) {
+      return NextResponse.redirect(new URL(dashboardPath || "/", request.url));
+    }
+  }
+
+  // 4️⃣ If trying to access a path not allowed for the role → redirect
   if (isAuthenticated) {
     const allowedPrefixes = ROLE_ACCESS_PREFIXES[currentUser.role] || [];
-    const isAllowed = allowedPrefixes.some(prefix => pathname.startsWith(prefix));
+    const pathPrefix = "/" + (pathname.split("/")[1] || "");
 
-    if (!isAllowed) {
+    if (!allowedPrefixes.includes(pathPrefix)) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }

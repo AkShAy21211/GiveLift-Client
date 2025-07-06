@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { loginAction } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import { ROLES } from "@/lib/types";
-import { loginHandler } from "@/app/(auth)/actions";
+import { loginHandler } from "@/lib/api/auth";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +44,7 @@ function LoginForm() {
         ...data,
       });
       dispatch(loginAction({ role: response.role }));
-
+      
       if (response.role === ROLES.STATE_COORDINATOR) {
         router.push("/state/dashboard");
       } else if (response.role === ROLES.DISTRICT_COORDINATOR) {

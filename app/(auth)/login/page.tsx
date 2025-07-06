@@ -1,6 +1,5 @@
 import LoginForm from "@/components/ui/forms/LoginForm";
 import { Metadata } from "next";
-import { Toaster } from "sonner";
 
 
 export const metadata: Metadata = {

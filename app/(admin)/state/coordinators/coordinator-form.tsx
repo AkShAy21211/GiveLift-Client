@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useActionState } from "react";
+import React, { useEffect, useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +20,8 @@ import {
   CitySelect,
 } from "react-country-state-city";
 import "react-country-state-city/dist/react-country-state-city.css";
-import { createCoordinator, updateCoordinator, Coordinator } from "./actions";
+import { createCoordinator, updateCoordinator } from "@/lib/api/coordinator";
+import { User } from "@/lib/types";
 
 const coordinatorFormSchema = z.object({
   name: z.string().min(2, {
@@ -35,14 +36,20 @@ const coordinatorFormSchema = z.object({
   phone: z.string().min(10, {
     message: "Phone number must be at least 10 digits.",
   }),
-  country: z.any(),
-  state: z.any(),
-  district: z.any(),
+  country: z.string().min(1, {
+    message: "Please select a country.",
+  }),
+  state: z.string().min(1, {
+    message: "Please select a state.",
+  }),
+  district: z.string().min(1, {
+    message: "Please select a district.",
+  }),
 });
 
 interface CoordinatorFormProps {
   mode: "create" | "edit";
-  coordinator?: Coordinator | null;
+  coordinator?: User | null;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -53,6 +60,10 @@ export default function CoordinatorForm({
   onSuccess,
   onCancel,
 }: CoordinatorFormProps) {
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
+
   const form = useForm<z.infer<typeof coordinatorFormSchema>>({
     resolver: zodResolver(coordinatorFormSchema),
     defaultValues: {
@@ -60,37 +71,42 @@ export default function CoordinatorForm({
       email: coordinator?.email || "",
       role: coordinator?.role || "district_coordinator",
       phone: coordinator?.phone || "",
-      country: coordinator?.country || "",
-      state: coordinator?.state || "",
-      district: coordinator?.district || "",
+      country: coordinator?.address?.country || "",
+      state: coordinator?.address?.state || "",
+      district: coordinator?.address?.district || "",
     },
   });
 
-  // Server Actions for form submission
-  const [createState, createAction] = useActionState(createCoordinator, null);
-  const [updateState, updateAction] = useActionState(
-    coordinator
-      ? updateCoordinator.bind(null, coordinator._id)
-      : createCoordinator,
-    null
-  );
-
-  const currentAction = mode === "create" ? createAction : updateAction;
-  const currentState = mode === "create" ? createState : updateState;
-
-  // Handle successful form submission
+  // Initialize selected values from coordinator data
   useEffect(() => {
-    if (currentState?.success) {
-      toast.success(currentState.message);
-      form.reset();
-      onSuccess();
-    } else if (currentState?.message && !currentState?.success) {
-      toast.error(currentState.message);
+    if (coordinator) {
+      if (coordinator.address?.country) {
+        setSelectedCountry({
+          id: (coordinator?.address?.country as any)?.id,
+          name: coordinator?.address?.country,
+        });
+      }
+      if (coordinator.address?.state) {
+        setSelectedState({
+          id: (coordinator?.address?.state as any)?.id,
+          name: coordinator?.address.state,
+        });
+      }
+      if (coordinator.address?.district) {
+        setSelectedDistrict({
+          id: (coordinator?.address?.district as any)?.id,
+          name: coordinator.address?.district,
+        });
+      }
     }
-  }, [currentState, form, onSuccess]);
+  }, [coordinator]);
+
+  const isEditing = mode === "edit";
 
   // Handle form submission with Server Actions
-  const handleSubmit = (values: z.infer<typeof coordinatorFormSchema>) => {
+  const handleSubmit = async (
+    values: z.infer<typeof coordinatorFormSchema>
+  ) => {
     const data = {
       name: values.name,
       email: values.email,
@@ -98,10 +114,52 @@ export default function CoordinatorForm({
       role: values.role,
       country: values.country,
       state: values.state,
-      district: values.district.name,
+      district: values.district,
     };
 
-    currentAction(data as any);
+    try {
+      if (!isEditing) {
+        const response = await createCoordinator(data);
+        if (response) {
+          form.reset();
+          toast.success("Coordinator created successfully");
+        }
+      } else {
+        const response = await updateCoordinator(
+          coordinator?._id as string,
+          data
+        );
+        if (response) {
+          form.reset();
+          toast.success("Coordinator updated successfully");
+        }
+      }
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Error creating coordinator");
+    }
+  };
+
+  const handleCountryChange = (country: any) => {
+    setSelectedCountry(country);
+    setSelectedState(null);
+    setSelectedDistrict(null);
+    form.setValue("country", country?.name || "");
+    form.setValue("state", "");
+    form.setValue("district", "");
+  };
+
+  const handleStateChange = (state: any) => {
+    setSelectedState(state);
+    setSelectedDistrict(null);
+    form.setValue("state", state?.name || "");
+    form.setValue("district", "");
+  };
+
+  const handleDistrictChange = (district: any) => {
+    setSelectedDistrict(district);
+    form.setValue("district", district?.name || "");
   };
 
   return (
@@ -118,9 +176,9 @@ export default function CoordinatorForm({
                   <Input placeholder="John Doe" {...field} />
                 </FormControl>
                 <FormMessage />
-                {currentState?.errors?.name && (
+                {form.formState?.errors?.name && (
                   <p className="text-sm text-red-500">
-                    {currentState.errors.name[0]}
+                    {form.formState?.errors?.name.message}
                   </p>
                 )}
               </FormItem>
@@ -136,9 +194,9 @@ export default function CoordinatorForm({
                   <Input placeholder="john@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
-                {currentState?.errors?.email && (
+                {form.formState?.errors.email && (
                   <p className="text-sm text-red-500">
-                    {currentState.errors.email[0]}
+                    {form.formState?.errors?.email.message}
                   </p>
                 )}
               </FormItem>
@@ -154,9 +212,9 @@ export default function CoordinatorForm({
                   <Input placeholder="1234567890" {...field} />
                 </FormControl>
                 <FormMessage />
-                {currentState?.errors?.phone && (
+                {form.formState?.errors?.phone && (
                   <p className="text-sm text-red-500">
-                    {currentState.errors.phone[0]}
+                    {form.formState?.errors.phone.message}
                   </p>
                 )}
               </FormItem>
@@ -172,9 +230,9 @@ export default function CoordinatorForm({
                   <Input placeholder="role" disabled {...field} />
                 </FormControl>
                 <FormMessage />
-                {currentState?.errors?.role && (
+                {form.formState?.errors?.role && (
                   <p className="text-sm text-red-500">
-                    {currentState.errors.role[0]}
+                    {form.formState?.errors?.role.message}
                   </p>
                 )}
               </FormItem>
@@ -188,16 +246,11 @@ export default function CoordinatorForm({
                 <FormLabel>Country</FormLabel>
                 <FormControl>
                   <CountrySelect
-                    defaultValue={coordinator?.country.id}
+                    defaultValue={selectedCountry}
                     containerClassName="form-group"
                     inputClassName=""
-                    onChange={(e: any) =>
-                      field.onChange({
-                        id: e.id,
-                        name: e.name,
-                      })
-                    }
-                    value={field.value}
+                    onChange={handleCountryChange}
+                    value={selectedCountry}
                     onTextChange={(_txt) => console.log(_txt)}
                     placeHolder="Select Country"
                   />
@@ -214,23 +267,12 @@ export default function CoordinatorForm({
                 <FormLabel>State</FormLabel>
                 <FormControl>
                   <StateSelect
-                    defaultValue={
-                      form.getValues("state" as any)?.id ||
-                      coordinator?.state.id
-                    }
-                    countryid={
-                      form.getValues("country" as any)?.id ||
-                      coordinator?.country.id
-                    }
+                    defaultValue={selectedState}
+                    countryid={selectedCountry?.id}
                     containerClassName="form-group"
                     inputClassName=""
-                    value={field.value}
-                    onChange={(e: any) =>
-                      field.onChange({
-                        id: e.id,
-                        name: e.name,
-                      })
-                    }
+                    value={selectedState}
+                    onChange={handleStateChange}
                     onTextChange={(_txt) => console.log(_txt)}
                     placeHolder="Select State"
                   />
@@ -247,24 +289,13 @@ export default function CoordinatorForm({
                 <FormLabel>District</FormLabel>
                 <FormControl>
                   <CitySelect
-                    defaultValue={coordinator?.district as any}
-                    countryid={
-                      form.getValues("country" as any)?.id ||
-                      coordinator?.country.id
-                    }
-                    stateid={
-                      form.getValues("state" as any)?.id ||
-                      coordinator?.state.id
-                    }
+                    defaultValue={selectedDistrict}
+                    countryid={selectedCountry?.id}
+                    stateid={selectedState?.id}
                     containerClassName="form-group"
                     inputClassName=""
-                    value={field.value}
-                    onChange={(e: any) =>
-                      field.onChange({
-                        id: e.id,
-                        name: e.name,
-                      })
-                    }
+                    value={selectedDistrict}
+                    onChange={handleDistrictChange}
                     onTextChange={(_txt) => console.log(_txt)}
                     placeHolder="Select District"
                   />

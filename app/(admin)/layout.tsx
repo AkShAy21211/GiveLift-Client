@@ -1,5 +1,4 @@
 "use client";
-import { redirect } from "next/navigation";
 import React, { useState } from "react";
 import {
   Menu,
@@ -7,22 +6,18 @@ import {
   Home,
   Users,
   AlertCircle,
-  Settings,
   LogOut,
   Shield,
-  Bell,
-  Search,
-  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { persistor, RootState } from "@/store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutAction } from "@/store/authSlice";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/types";
+import { logoutHandler } from "@/lib/api/auth";
+import { useRouter } from 'next/navigation';
 
 // Types
 interface NavItem {
@@ -34,11 +29,6 @@ interface NavItem {
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-}
-
-interface MobileSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
 }
 
 interface DesktopSidebarProps {
@@ -218,13 +208,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [currentPath, setCurrentPath] = useState<string>("/admin");
   const dispatch = useDispatch();
+  const router = useRouter();
   const role = useSelector((state: RootState) => state.auth?.role) || "";
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      await logoutHandler();
+
       dispatch(logoutAction());
       persistor.purge();
       localStorage.removeItem("auth");
+      router.push("/login");
     } catch (error) {
       console.log(error);
 

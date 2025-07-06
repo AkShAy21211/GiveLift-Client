@@ -1,5 +1,4 @@
 import React from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,23 +8,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, MapPin, Clock, Droplets } from "lucide-react";
+import {  MapPin, Clock, Droplets } from "lucide-react";
 import { Metadata } from "next";
 import { DisasterReport } from "@/lib/types";
 import { headers } from "next/headers";
 import { createSSRApi } from "@/lib/api/server";
 import WeatherAleart from "./WeatherAleart";
-import { DonationModal } from "@/components/modal/DonateResourceModal";
 
-interface DisasterCard {
-  id: string;
-  title: string;
-  location: string;
-  description: string;
-  severity: "high" | "medium" | "low";
-  type: string;
-  timeAgo: string;
-}
+
 
 export const metadata: Metadata = {
   title: "Home",
@@ -65,9 +55,9 @@ async function Home() {
               <Card
                 key={disaster._id}
                 className={`border-l-4 ${
-                  disaster.severityLevel === "high"
+                  disaster.severity === "high"
                     ? "border-l-red-500"
-                    : disaster.severityLevel === "moderate"
+                    : disaster.severity === "moderate"
                     ? "border-l-yellow-500"
                     : "border-l-green-500"
                 }`}
@@ -75,18 +65,18 @@ async function Home() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base font-semibold text-gray-900">
-                      {disaster.disasterType} at {disaster.place}
+                      {disaster.disasterType} at {disaster.address}
                     </CardTitle>
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4" />
-                    <span>{disaster.place}</span>
+                    <span>{disaster.address}</span>
                   </div>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
                   <CardDescription className="text-sm text-gray-600 leading-relaxed">
-                    {disaster.situationDescription}
+                    {disaster.description}
                   </CardDescription>
 
                   <div className="flex items-center justify-between flex-wrap gap-2">
@@ -94,14 +84,14 @@ async function Home() {
                       <Badge
                         variant="outline"
                         className={`px-2 py-1 text-xs capitalize ${
-                          disaster.severityLevel === "high"
+                          disaster.severity === "high"
                             ? "bg-red-100 text-red-600"
-                            : disaster.severityLevel === "moderate"
+                            : disaster.severity === "moderate"
                             ? "bg-yellow-100 text-yellow-700"
                             : "bg-green-100 text-green-700"
                         }`}
                       >
-                        {disaster.severityLevel} severity
+                        {disaster.severity} severity
                       </Badge>
 
                       <Badge
@@ -109,7 +99,7 @@ async function Home() {
                         className={`px-2 py-1 text-xs capitalize ${
                           disaster.status === "pending"
                             ? "bg-orange-100 text-orange-600"
-                            : disaster.status === "in-progress"
+                            : disaster.status === "responding"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-gray-200 text-gray-700"
                         }`}
@@ -121,7 +111,7 @@ async function Home() {
                     <div className="flex items-center space-x-2">
                       <Clock className="w-3 h-3 text-gray-400" />
                       <span className="text-xs text-gray-500">
-                        {new Date(disaster.createdAt).toLocaleString()}
+                        {new Date(disaster.createdAt as string).toLocaleString()}
                       </span>
                     </div>
                   </div>

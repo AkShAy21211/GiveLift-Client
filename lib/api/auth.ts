@@ -32,3 +32,9 @@ export const resetPasswordHandler = async (data: {
   const response = await clientApi.post("/auth/reset-password", data);
   return response.data;
 };
+
+
+export const logoutHandler = async () => {
+  const response = await clientApi.post("/auth/logout");
+  return response.data;
+}

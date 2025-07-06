@@ -19,10 +19,19 @@ import {
   Trash2,
   Save,
   X,
+  LogOut,
 } from "lucide-react";
 import { getProfile, updateProfile } from "./action";
 import { User } from "@/lib/types";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { logoutHandler } from "@/lib/api/auth";
+import { logoutAction } from "@/store/authSlice";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { persistor } from "@/store/store";
 
 // Define Zod schemas
 const profileSchema = z.object({
@@ -35,10 +44,13 @@ const profileSchema = z.object({
       "Phone must be in format +91 XXXXXXXXXX or empty"
     )
     .optional(),
-  address: z.string().optional(),
+  address: z.object({
+    district: z.string().min(2, "District must be at least 2 characters"),
+    state: z.string().min(2, "State must be at least 2 characters"),
+    country: z.string().min(2, "Country must be at least 2 characters"),
+  }),
   isVolunteer: z.boolean().optional(),
 });
-
 const notificationSchema = z.object({
   disasterAlerts: z.boolean(),
   weatherWarnings: z.boolean(),
@@ -53,6 +65,9 @@ export default function ProfilePage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingNotifications, setIsEditingNotifications] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [profileData, setProfileData] = useState<null | Partial<User>>(null);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchProfile() {
@@ -65,9 +80,6 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, []);
-
-  // Initial data - matching the MongoDB document structure
-  const [profileData, setProfileData] = useState<null | Partial<User>>(null);
 
   const [notificationData, setNotificationData] = useState({
     disasterAlerts: true,
@@ -88,7 +100,11 @@ export default function ProfilePage() {
       name: profileData?.name,
       email: profileData?.email,
       phone: profileData?.phone,
-      address: profileData?.address,
+      address: {
+        district: profileData?.address?.district,
+        state: profileData?.address?.state,
+        country: profileData?.address?.country,
+      },
     },
   });
 
@@ -114,7 +130,6 @@ export default function ProfilePage() {
   const getInitials = (name: string) => {
     return name?.split("")[0].charAt(0);
   };
-
   const contributions = [
     {
       id: 1,
@@ -137,36 +152,29 @@ export default function ProfilePage() {
       name: profileData?.name,
       email: profileData?.email,
       phone: profileData?.phone,
-      address: profileData?.address,
+      address: {
+        district: profileData?.address?.district,
+        state: profileData?.address?.state,
+        country: profileData?.address?.country,
+      },
     });
     setIsEditingProfile(true);
   };
 
   const onProfileSubmit = async (data: Partial<ProfileFormData>) => {
-    setProfileData((prev) => ({
-      ...prev,
-      name: data.name,
-      email: data.email,
-      phone: data.phone || "",
-      address: data.address || "",
-    }));
     try {
-      await updateProfile(profileData?._id as string, data);
-      toast.success("Profile updated successfully", {
-        style: {
-          background: "green",
-          color: "white",
-        },
-      });
+      await updateProfile(profileData?._id as string, data as any);
+      setProfileData((prev) => ({
+        ...prev,
+        ...data,
+      }));
+      toast.success("Profile updated successfully");
+      setIsEditingProfile(false);
     } catch (error) {
-      toast.error("Error updating profile", {
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
+      toast.error("Error updating profile");
     }
   };
+
   // In the ProfilePage component, add a function to handle volunteer status toggle
   const toggleVolunteerStatus = async () => {
     const newStatus = !profileData?.isVolunteer;
@@ -199,6 +207,21 @@ export default function ProfilePage() {
     setIsEditingNotifications(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutHandler();
+
+      dispatch(logoutAction());
+      persistor.purge();
+      localStorage.removeItem("auth");
+      router.push("/login");
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Something went wrong");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
@@ -211,7 +234,7 @@ export default function ProfilePage() {
                 <Users className="h-5 w-5 mr-2" />
                 Profile
               </h3>
-              <button
+              <Button
                 onClick={() =>
                   isEditingProfile
                     ? setIsEditingProfile(false)
@@ -230,7 +253,7 @@ export default function ProfilePage() {
                     Edit
                   </>
                 )}
-              </button>
+              </Button>
             </div>
             <div className="p-6">
               {isEditingProfile ? (
@@ -260,10 +283,10 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">
                       Email
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="email"
                       {...registerProfile("email")}
                       className={`w-full px-3 py-2 border ${
@@ -281,10 +304,10 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">
                       Phone Number
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="text"
                       {...registerProfile("phone")}
                       className={`w-full px-3 py-2 border ${
@@ -301,30 +324,90 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {/* Address Fields */}
+                  <div className="space-y-2">
+                    <Label className="block text-sm font-medium text-gray-700">
                       Address
-                    </label>
-                    <textarea
-                      {...registerProfile("address")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter your address"
-                      rows={3}
-                    />
+                    </Label>
+
+                    <div>
+                      <Label className="block text-xs text-gray-500 mb-1">
+                        District
+                      </Label>
+                      <Input
+                        type="text"
+                        {...registerProfile("address.district")}
+                        className={`w-full px-3 py-2 border ${
+                          profileErrors.address?.district
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        placeholder="Enter district"
+                      />
+                      {profileErrors.address?.district && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {profileErrors.address.district.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="block text-xs text-gray-500 mb-1">
+                        State
+                      </Label>
+                      <Input
+                        type="text"
+                        {...registerProfile("address.state")}
+                        className={`w-full px-3 py-2 border ${
+                          profileErrors.address?.state
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        placeholder="Enter state"
+                      />
+                      {profileErrors.address?.state && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {profileErrors.address.state.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="block text-xs text-gray-500 mb-1">
+                        Country
+                      </Label>
+                      <Input
+                        type="text"
+                        {...registerProfile("address.country")}
+                        className={`w-full px-3 py-2 border ${
+                          profileErrors.address?.country
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        placeholder="Enter country"
+                      />
+                      {profileErrors.address?.country && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {profileErrors.address.country.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <Label className="block text-sm font-medium text-gray-700">
                       Volunteer Status
-                    </label>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
+                    </Label>
+                    <Label className="relative inline-flex items-center cursor-pointer">
+                      <Input
                         type="checkbox"
                         {...registerProfile("isVolunteer")}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
+                    </Label>
                   </div>
+
                   <button
                     type="submit"
                     className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center"
@@ -345,7 +428,7 @@ export default function ProfilePage() {
                       </h2>
                       <p className="text-sm text-gray-600">
                         {profileData?.role?.replace("_", " ").toUpperCase()} •
-                        Joined: {formatDate(profileData?.createdAt as string)}
+                        Joined: {formatDate(profileData?.createdAt as any)}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -392,22 +475,25 @@ export default function ProfilePage() {
                           </div>
                         )}
 
-                        {profileData?.address ? (
-                          <div className="flex items-start space-x-2 text-sm">
-                            <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
-                            <div>
-                              <span className="text-gray-600">Address:</span>
-                              <span className="font-medium ml-1">
-                                {profileData.address}
-                              </span>
+                        {profileData?.address && (
+                          <div className="space-y-2">
+                            <div className="flex items-start space-x-2 text-sm">
+                              <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
+                              <div>
+                                <span className="text-gray-600">Address:</span>
+                                <div className="ml-1">
+                                  <p className="font-medium">
+                                    District: {profileData.address.district}
+                                  </p>
+                                  <p className="font-medium">
+                                    State: {profileData.address.state}
+                                  </p>
+                                  <p className="font-medium">
+                                    Country: {profileData.address.country}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2 text-sm">
-                            <MapPin className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-400">
-                              Address: Not provided
-                            </span>
                           </div>
                         )}
 
@@ -416,7 +502,7 @@ export default function ProfilePage() {
                             <span className="text-sm text-gray-600">
                               Volunteer:
                             </span>
-                            <button
+                            <Button
                               onClick={toggleVolunteerStatus}
                               className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                                 profileData.isVolunteer
@@ -431,7 +517,7 @@ export default function ProfilePage() {
                                     : "translate-x-1"
                                 }`}
                               />
-                            </button>
+                            </Button>
                           </div>
                         )}
                       </div>
@@ -653,7 +739,7 @@ export default function ProfilePage() {
             </div>
           </div> */}
         </div>
-        
+
         {/* Contribution History */}
 
         {/* <div className="bg-white rounded-lg shadow">
@@ -699,14 +785,21 @@ export default function ProfilePage() {
         </div> */}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-end">
-          <button
+        <div className="flex flex-col sm:flex-row gap-3 justify-between">
+          <Button
+            onClick={handleLogout}
+            className="inline-flex items-center px-4 py-2 border border-transparent "
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+          <Button
             onClick={() => setShowDeleteDialog(true)}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 sm:w-auto"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Account
-          </button>
+          </Button>
         </div>
 
         {/* Delete Confirmation Dialog */}
@@ -722,13 +815,13 @@ export default function ProfilePage() {
                   your account and remove your data from our servers.
                 </p>
                 <div className="flex gap-3 justify-end">
-                  <button
+                  <Button
                     onClick={() => setShowDeleteDialog(false)}
                     className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => {
                       console.log("Account deleted");
                       setShowDeleteDialog(false);
@@ -736,7 +829,7 @@ export default function ProfilePage() {
                     className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700"
                   >
                     Yes, delete my account
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

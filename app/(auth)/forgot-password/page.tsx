@@ -9,7 +9,7 @@ import { Loader, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { forgortPasswordHandler } from "../actions";
+import { forgortPasswordHandler } from "@/lib/api/auth"; 
 
 type ForgotPasswordFormValues = {
   email: string;
