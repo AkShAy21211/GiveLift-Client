@@ -51,5 +51,29 @@ A full-stack, real-time disaster response platform built using **Next.js (App Ro
 
 ---
 
-## 📁 Folder Structure (App Router)
+## 📁 Folder Structure (App Router)\
+client/
+├── app/ # Main App Router directory
+│ ├── (admin)/ # Pages for state & district coordinators
+│ ├── (auth)/ # Login, Register, Reset Password
+│ ├── (user)/ # General user pages
+│ ├── assets/ # Static assets or shared content
+│ ├── unauthorized/ # Access denied page
+│ ├── layout.tsx # Global app layout
+│ ├── error.tsx # Error boundary
+│ ├── not-found.tsx # 404 handler
+│ ├── provider.tsx # Context providers
+│ └── globals.css # Global styles
+├── components/ # Reusable UI components
+├── hooks/ # Custom React hooks
+├── lib/ # Utility functions, API clients
+├── store/ # Zustand or Redux store setup
+├── public/ # Static public assets
+├── middleware.ts # Middleware for role-based routing
+├── tailwind.config.ts # Tailwind CSS config
+├── postcss.config.mjs # PostCSS config
+├── tsconfig.json # TypeScript config
+├── next.config.ts # Next.js config
+├── .env # Environment variables
+└── README.md # You're here
 
