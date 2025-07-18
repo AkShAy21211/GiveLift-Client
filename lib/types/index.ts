@@ -101,6 +101,7 @@ export const RESOURCE_TYPES = [
   "Psychological Support",
   "Other",
 ] as const;
+export type ResourceType = typeof RESOURCE_TYPES[number];
 
 // ---------------------
 // ✅ GeoPoint

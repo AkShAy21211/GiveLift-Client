@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { persistor, RootState } from "@/store/store";
 import { DonationModal } from "@/app/(user)/components/DonateResourceModal";
-import { logoutHandler } from "../(auth)/api"; 
+import { logoutHandler } from "../(auth)/api";
 import { logoutAction } from "@/store/authSlice";
 import { toast } from "sonner";
 function Header() {
@@ -53,14 +53,6 @@ function Header() {
               variant="secondary"
               size="sm"
               className="bg-red-600 hover:bg-red-700 text-white border-0"
-            >
-              Request Help
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white border-0"
             >
               <Phone className="w-4 h-4 mr-2" />
               Emergency Contact

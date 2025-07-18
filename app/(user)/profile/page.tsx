@@ -21,7 +21,7 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import { getProfile, updateProfile } from "../api/profile";
+import { getProfile, updateProfile } from "../api/index";
 import { User } from "@/lib/types";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -71,13 +71,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function fetchProfile() {
-      try {
-        const response = await getProfile();
-        if (response?.data) {
-          setProfileData(response.data);
-        }
-      } catch (error) {
-        console.log(error);
+      const response = await getProfile();
+      if (response?.data) {
+        setProfileData(response.data);
       }
     }
     fetchProfile();
@@ -164,44 +160,25 @@ export default function ProfilePage() {
   };
 
   const onProfileSubmit = async (data: Partial<ProfileFormData>) => {
-    try {
-      await updateProfile(profileData?._id as string, data as any);
-      setProfileData((prev) => ({
-        ...prev,
-        ...data,
-      }));
-      toast.success("Profile updated successfully");
-      setIsEditingProfile(false);
-    } catch (error) {
-      toast.error("Error updating profile");
-    }
+    await updateProfile(profileData?._id as string, data as any);
+    setProfileData((prev) => ({
+      ...prev,
+      ...data,
+    }));
+    setIsEditingProfile(false);
   };
 
   // In the ProfilePage component, add a function to handle volunteer status toggle
   const toggleVolunteerStatus = async () => {
     const newStatus = !profileData?.isVolunteer;
-    try {
-      await updateProfile(profileData?._id as string, {
-        isVolunteer: newStatus,
-      });
-      setProfileData((prev) => ({
-        ...prev,
-        isVolunteer: newStatus,
-      }));
-      toast.success(`Volunteer status ${newStatus ? "enabled" : "disabled"}`, {
-        style: {
-          background: "green",
-          color: "white",
-        },
-      });
-    } catch (error) {
-      toast.error("Error updating volunteer status", {
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
-    }
+
+    await updateProfile(profileData?._id as string, {
+      isVolunteer: newStatus,
+    });
+    setProfileData((prev) => ({
+      ...prev,
+      isVolunteer: newStatus,
+    }));
   };
 
   const onNotificationSubmit = (data: NotificationFormData) => {
@@ -210,18 +187,12 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    try {
-      await logoutHandler();
+    await logoutHandler();
 
-      dispatch(logoutAction());
-      persistor.purge();
-      localStorage.removeItem("auth");
-      router.push("/login");
-    } catch (error) {
-      console.log(error);
-
-      toast.error("Something went wrong");
-    }
+    dispatch(logoutAction());
+    persistor.purge();
+    localStorage.removeItem("auth");
+    router.push("/login");
   };
 
   return (
@@ -504,22 +475,22 @@ export default function ProfilePage() {
                             <span className="text-sm text-gray-600">
                               Volunteer:
                             </span>
-                            <Button
+                            <button
                               onClick={toggleVolunteerStatus}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
                                 profileData.isVolunteer
                                   ? "bg-blue-600"
-                                  : "bg-gray-200"
+                                  : "bg-gray-300"
                               }`}
                             >
                               <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                                className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-300 ${
                                   profileData.isVolunteer
-                                    ? "translate-x-6"
+                                    ? "translate-x-5"
                                     : "translate-x-1"
                                 }`}
                               />
-                            </Button>
+                            </button>
                           </div>
                         )}
                       </div>

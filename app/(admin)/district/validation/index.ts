@@ -23,3 +23,6 @@ export const disasterReportSchema = z.object({
     message: "Please select at least one resource needed.",
   }),
 });
+
+
+export type DisasterReportFormData = z.infer<typeof disasterReportSchema>;

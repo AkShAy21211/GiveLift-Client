@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { toast } from "sonner"; // ✅ added for toast notifications
+import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -14,19 +14,21 @@ export interface ApiResponse<T> {
 
 export async function apiActionWrapper<T>(
   action: () => Promise<{ data: T }>,
-  successMessage = "Operation successful"
+  successMessage = "Operation successful",
+  showToast = true // ✅ Optional toast flag
 ): Promise<ApiResponse<T>> {
   try {
     const response = await action();
     const message = (response.data as any)?.message || successMessage;
 
-    //  Direct success toast
-    toast.success(message, {
-      style: {
-        backgroundColor: "green",
-        color: "white",
-      },
-    });
+    if (showToast) {
+      toast.success(message, {
+        style: {
+          backgroundColor: "green",
+          color: "white",
+        },
+      });
+    }
 
     return {
       success: true,
@@ -43,13 +45,14 @@ export async function apiActionWrapper<T>(
       console.error("API Error:", error);
     }
 
-    //  Direct error toast
-    toast.error(message, {
-      style: {
-        backgroundColor: "red",
-        color: "white",
-      },
-    });
+    if (showToast) {
+      toast.error(message, {
+        style: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    }
 
     return {
       success: false,
