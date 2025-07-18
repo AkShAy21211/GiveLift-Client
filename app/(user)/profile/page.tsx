@@ -21,13 +21,13 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import { getProfile, updateProfile } from "./action";
+import { getProfile, updateProfile } from "../api/profile";
 import { User } from "@/lib/types";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { logoutHandler } from "@/lib/api/auth";
+import { logoutHandler } from "@/app/(auth)/api";
 import { logoutAction } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -72,8 +72,10 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const data = await getProfile();
-        setProfileData(data);
+        const response = await getProfile();
+        if (response?.data) {
+          setProfileData(response.data);
+        }
       } catch (error) {
         console.log(error);
       }

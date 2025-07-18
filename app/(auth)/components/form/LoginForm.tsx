@@ -5,16 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { loginSchema } from "@/lib/validation";
+import { loginSchema } from "@/app/(auth)/validation";
 import { Eye, EyeOff } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDispatch } from "react-redux";
 import { loginAction } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import { ROLES } from "@/lib/types";
-import { loginHandler } from "@/lib/api/auth";
+import { loginHandler } from "@/app/(auth)/api";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -39,61 +37,28 @@ function LoginForm() {
     password: string;
     userType?: string;
   }) => {
-    try {
-      const response = await loginHandler({
-        ...data,
-      });
-      dispatch(loginAction({ role: response.role }));
-      
-      if (response.role === ROLES.STATE_COORDINATOR) {
+    const response = await loginHandler(data);
+
+    if (response) {
+      const role = response?.data?.role as string;
+      dispatch(loginAction({ role }));
+
+      if (role === ROLES.STATE_COORDINATOR) {
         router.push("/state/dashboard");
-      } else if (response.role === ROLES.DISTRICT_COORDINATOR) {
+      } else if (role === ROLES.DISTRICT_COORDINATOR) {
         router.push("/district/dashboard");
       } else {
         router.push("/");
       }
-      toast.success(response.message, {
-        style: {
-          backgroundColor: "green",
-          color: "white",
-        },
-      });
-
-      reset();
-    } catch (error: any) {
-      console.log("fdfdfdfdfdfdfd", error);
-      toast.error(error?.response?.data?.message, {
-        style: {
-          backgroundColor: "red",
-          color: "white",
-        },
-      });
     }
+
+    reset();
   };
+
+
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      {/* User Type Selection (only shown if not explicitly set via props) */}
-      <div>
-        <Label>Login as</Label>
-        <RadioGroup
-          defaultValue="state-coordinator"
-          className="flex gap-4 mt-2"
-          onValueChange={(value: "state-coordinator" | "regular") =>
-            setUserType(value)
-          }
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="regular" id="regular" />
-            <Label htmlFor="regular">Regular</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="state-coordinator" id="state-coordinator" />
-            <Label htmlFor="state-coordinator">State Coordinator</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
       <div>
         <Label htmlFor="email">Email</Label>
         <Input

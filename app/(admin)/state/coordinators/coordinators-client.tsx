@@ -25,9 +25,9 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  deactivateCoordinator,
-  restoreCoordinator,
-} from "@/lib/api/coordinator";
+  deactivateUser,
+  restoreUser,
+} from "../api/coordinator"
 import CoordinatorForm from "./coordinator-form";
 import { User } from "@/lib/types";
 
@@ -68,7 +68,7 @@ export default function CoordinatorsClient({
 
     startTransition(async () => {
       try {
-        const result = await deactivateCoordinator(currentCoordinator._id);
+        const result = await deactivateUser(currentCoordinator._id);
 
         if (result.success) {
           setCoordinators((prev) =>
@@ -95,7 +95,7 @@ export default function CoordinatorsClient({
 
     startTransition(async () => {
       try {
-        const result = await restoreCoordinator(currentCoordinator._id);
+        const result = await restoreUser(currentCoordinator._id);
 
         if (result.success) {
           setCoordinators((prev) =>
@@ -141,7 +141,6 @@ export default function CoordinatorsClient({
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>District</TableHead>
-              <TableHead>State</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -155,7 +154,6 @@ export default function CoordinatorsClient({
                 <TableCell>{coordinator.email}</TableCell>
                 <TableCell>{coordinator.phone}</TableCell>
                 <TableCell>{coordinator.address?.district || "N/A"}</TableCell>
-                <TableCell>{coordinator.address?.state || "N/A"}</TableCell>
                 <TableCell>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${

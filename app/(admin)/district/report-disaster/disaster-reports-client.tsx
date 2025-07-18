@@ -33,12 +33,9 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DisasterReport,
-  SEVERITY_LEVELS,
-  updateDisasterReportStatus,
-} from "@/lib/api/disaster";
+import { DisasterReport, SEVERITY_LEVELS } from "@/lib/types";
 import DisasterReportForm from "./disaster-report-form";
+import { updateDisasterReportStatus } from "../api/disaster";
 
 interface DisasterReportsClientProps {
   initialReports: DisasterReport[];
@@ -114,7 +111,7 @@ export default function DisasterReportsClient({
 
   const handleFormSuccess = () => {
     setCreateDialogOpen(false);
-    router.refresh();
+    // router.refresh();
   };
 
   const handleEditFormSuccess = () => {
@@ -195,7 +192,7 @@ export default function DisasterReportsClient({
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg font-semibold text-gray-900">
-                    {report.address}
+                    {report.address.label}
                   </CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -278,12 +275,12 @@ export default function DisasterReportsClient({
 
                 <div className="flex items-center text-sm text-gray-600">
                   <MapPin className="w-4 h-4 mr-1" />
-                  {report?.address}
+                  {report?.address.label}
                 </div>
 
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(report?.createdAt as string).toLocaleDateString()}
+                  {new Date(report?.createdAt).toLocaleDateString()}
                 </div>
 
                 <p className="text-sm text-gray-700 line-clamp-2">
@@ -371,7 +368,7 @@ export default function DisasterReportsClient({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-gray-900">Address</h4>
-                  <p className="text-gray-600">{selectedReport.address}</p>
+                  <p className="text-gray-600">{selectedReport.address.label}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Disaster Type</h4>
@@ -401,7 +398,7 @@ export default function DisasterReportsClient({
                   <h4 className="font-medium text-gray-900">Reported Date</h4>
                   <p className="text-gray-600">
                     {new Date(
-                      selectedReport?.createdAt as string
+                      selectedReport?.createdAt
                     ).toLocaleDateString()}
                   </p>
                 </div>

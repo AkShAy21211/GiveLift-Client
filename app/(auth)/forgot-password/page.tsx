@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { forgotPasswordSchema } from "@/lib/validation";
+import { forgotPasswordSchema } from "../validation"; 
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { forgortPasswordHandler } from "@/lib/api/auth"; 
+import { forgotPasswordHandler } from "../api";
 
 type ForgotPasswordFormValues = {
   email: string;
@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     try {
-      const response = await forgortPasswordHandler(data);
+      const response = await forgotPasswordHandler(data);
       toast.success(response.message, {
         style: {
           backgroundColor: "green",

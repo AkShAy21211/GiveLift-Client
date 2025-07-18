@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useActionState, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,38 +14,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import {
-  CountrySelect,
-  StateSelect,
-  CitySelect,
-} from "react-country-state-city";
-import "react-country-state-city/dist/react-country-state-city.css";
-import { createCoordinator, updateCoordinator } from "@/lib/api/coordinator";
+import { createUser, updateUser } from "../api/coordinator";
 import { User } from "@/lib/types";
-
-const coordinatorFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email.",
-  }),
-  role: z.string().min(2, {
-    message: "Role must be at least 2 characters.",
-  }),
-  phone: z.string().min(10, {
-    message: "Phone number must be at least 10 digits.",
-  }),
-  country: z.string().min(1, {
-    message: "Please select a country.",
-  }),
-  state: z.string().min(1, {
-    message: "Please select a state.",
-  }),
-  district: z.string().min(1, {
-    message: "Please select a district.",
-  }),
-});
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getDistricts } from "@/lib/api/common";
+import { coordinatorFormSchema } from "../validation/coordinator";
 
 interface CoordinatorFormProps {
   mode: "create" | "edit";
@@ -60,10 +39,9 @@ export default function CoordinatorForm({
   onSuccess,
   onCancel,
 }: CoordinatorFormProps) {
-  const [selectedCountry, setSelectedCountry] = useState<any>(null);
-  const [selectedState, setSelectedState] = useState<any>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
-
+  const [districts, setDistricts] = useState<{ _id: string; name: string }[]>(
+    []
+  );
   const form = useForm<z.infer<typeof coordinatorFormSchema>>({
     resolver: zodResolver(coordinatorFormSchema),
     defaultValues: {
@@ -71,35 +49,16 @@ export default function CoordinatorForm({
       email: coordinator?.email || "",
       role: coordinator?.role || "district_coordinator",
       phone: coordinator?.phone || "",
-      country: coordinator?.address?.country || "",
-      state: coordinator?.address?.state || "",
       district: coordinator?.address?.district || "",
+      isVolunteer: coordinator?.isVolunteer || true,
     },
   });
 
-  // Initialize selected values from coordinator data
   useEffect(() => {
-    if (coordinator) {
-      if (coordinator.address?.country) {
-        setSelectedCountry({
-          id: (coordinator?.address?.country as any)?.id,
-          name: coordinator?.address?.country,
-        });
-      }
-      if (coordinator.address?.state) {
-        setSelectedState({
-          id: (coordinator?.address?.state as any)?.id,
-          name: coordinator?.address.state,
-        });
-      }
-      if (coordinator.address?.district) {
-        setSelectedDistrict({
-          id: (coordinator?.address?.district as any)?.id,
-          name: coordinator.address?.district,
-        });
-      }
-    }
-  }, [coordinator]);
+    getDistricts()
+      .then(setDistricts)
+      .catch(() => toast.error("Failed to load districts"));
+  }, []);
 
   const isEditing = mode === "edit";
 
@@ -112,23 +71,19 @@ export default function CoordinatorForm({
       email: values.email,
       phone: values.phone,
       role: values.role,
-      country: values.country,
-      state: values.state,
       district: values.district,
+      isVolunteer: values.isVolunteer || true,
     };
 
     try {
       if (!isEditing) {
-        const response = await createCoordinator(data);
+        const response = await createUser(data);
         if (response) {
           form.reset();
           toast.success("Coordinator created successfully");
         }
       } else {
-        const response = await updateCoordinator(
-          coordinator?._id as string,
-          data
-        );
+        const response = await updateUser(coordinator?._id as string, data);
         if (response) {
           form.reset();
           toast.success("Coordinator updated successfully");
@@ -139,27 +94,6 @@ export default function CoordinatorForm({
 
       toast.error("Error creating coordinator");
     }
-  };
-
-  const handleCountryChange = (country: any) => {
-    setSelectedCountry(country);
-    setSelectedState(null);
-    setSelectedDistrict(null);
-    form.setValue("country", country?.name || "");
-    form.setValue("state", "");
-    form.setValue("district", "");
-  };
-
-  const handleStateChange = (state: any) => {
-    setSelectedState(state);
-    setSelectedDistrict(null);
-    form.setValue("state", state?.name || "");
-    form.setValue("district", "");
-  };
-
-  const handleDistrictChange = (district: any) => {
-    setSelectedDistrict(district);
-    form.setValue("district", district?.name || "");
   };
 
   return (
@@ -238,68 +172,30 @@ export default function CoordinatorForm({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="country"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <FormControl>
-                  <CountrySelect
-                    defaultValue={selectedCountry}
-                    containerClassName="form-group"
-                    inputClassName=""
-                    onChange={handleCountryChange}
-                    value={selectedCountry}
-                    onTextChange={(_txt) => console.log(_txt)}
-                    placeHolder="Select Country"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <StateSelect
-                    defaultValue={selectedState}
-                    countryid={selectedCountry?.id}
-                    containerClassName="form-group"
-                    inputClassName=""
-                    value={selectedState}
-                    onChange={handleStateChange}
-                    onTextChange={(_txt) => console.log(_txt)}
-                    placeHolder="Select State"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
           <FormField
             control={form.control}
             name="district"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>District</FormLabel>
-                <FormControl>
-                  <CitySelect
-                    defaultValue={selectedDistrict}
-                    countryid={selectedCountry?.id}
-                    stateid={selectedState?.id}
-                    containerClassName="form-group"
-                    inputClassName=""
-                    value={selectedDistrict}
-                    onChange={handleDistrictChange}
-                    onTextChange={(_txt) => console.log(_txt)}
-                    placeHolder="Select District"
-                  />
-                </FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {districts.map((district) => (
+                      <SelectItem key={district._id} value={district.name}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

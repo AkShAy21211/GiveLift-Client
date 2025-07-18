@@ -4,12 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { registerSchema } from "@/lib/validation";
+import { registerSchema } from "@/app/(auth)/validation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { registerHandler } from "@/lib/api/auth";
+import { registerHandler } from "@/app/(auth)/api";
+import { useRouter } from "next/navigation";
 import {
   CountrySelect,
   StateSelect,
@@ -21,6 +21,7 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [countryid, setCountryid] = useState(0);
   const [stateid, setStateid] = useState(0);
+  const router = useRouter();
 
   const {
     register,
@@ -34,11 +35,9 @@ function RegisterForm() {
       name: "",
       email: "",
       phone: "",
+      district: "",
       password: "",
       confirmPassword: "",
-      country: "",
-      state: "",
-      district: "",
     },
   });
 
@@ -48,38 +47,23 @@ function RegisterForm() {
     phone: string;
     password: string;
     confirmPassword: string;
-    country: string;
-    state: string;
     district: string;
   }) => {
-    try {
-      const registerData = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-        country: data.country,
-        state: data.state,
-        district: data.district,
-      };
-      const response = await registerHandler(registerData);
-      toast.success(response.message, {
-        style: {
-          backgroundColor: "green",
-          color: "white",
-        },
-      });
+    const response = await registerHandler({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      district: data.district,
+    });
+
+    if (response.success) {
+      router.push("/login");
       reset();
-    } catch (error: any) {
-      console.log(error);
-      toast.error(error.response.data.message, {
-        style: {
-          backgroundColor: "red",
-          color: "white",
-        },
-      });
     }
   };
+
+  
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -130,30 +114,37 @@ function RegisterForm() {
         )}
       </div>
 
-      <div>
+      <div className="hidden">
         <Label className="text-gray-700">Country</Label>
         <CountrySelect
           onChange={(e: any) => {
             setCountryid(e.id);
             setValue("country", e.name);
           }}
+          value={101}
+          defaultValue={
+            {
+              id: 101,
+              name: "India",
+            } as any
+          }
           placeHolder="Select Country"
           containerClassName="mt-1 border-gray-300 rounded-md focus:border-gray-400 focus:ring-0"
           inputClassName="w-full p-2 border rounded-md"
         />
-        {errors.country && (
-          <p className="text-red-500 text-sm mt-1">{errors.country.message}</p>
-        )}
       </div>
 
-      <div>
+      <div className="hidden">
         <Label className="text-gray-700">State</Label>
         <StateSelect
-          countryid={countryid}
-          onChange={(e: any) => {
-            setStateid(e.id);
-            setValue("state", e.name);
-          }}
+          countryid={countryid || 101}
+          value={4028}
+          defaultValue={
+            {
+              id: 4028,
+              name: "Kerala",
+            } as any
+          }
           placeHolder="Select State"
           containerClassName="mt-1 border-gray-300 rounded-md focus:border-gray-400 focus:ring-0"
           inputClassName="w-full p-2 border rounded-md"
@@ -166,8 +157,8 @@ function RegisterForm() {
       <div>
         <Label className="text-gray-700">District</Label>
         <CitySelect
-          countryid={countryid}
-          stateid={stateid}
+          countryid={countryid || 101}
+          stateid={stateid || 4028}
           onChange={(e: any) => {
             setValue("district", e.name);
           }}

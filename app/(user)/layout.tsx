@@ -7,8 +7,8 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { persistor, RootState } from "@/store/store";
-import { DonationModal } from "@/components/modal/DonateResourceModal";
-import { logoutHandler } from "@/lib/api/auth";
+import { DonationModal } from "@/app/(user)/components/DonateResourceModal";
+import { logoutHandler } from "../(auth)/api"; 
 import { logoutAction } from "@/store/authSlice";
 import { toast } from "sonner";
 function Header() {

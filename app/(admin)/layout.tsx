@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutAction } from "@/store/authSlice";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/types";
-import { logoutHandler } from "@/lib/api/auth";
+import { logoutHandler } from "../(auth)/api"; 
 import { useRouter } from 'next/navigation';
 
 // Types

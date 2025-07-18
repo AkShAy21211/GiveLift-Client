@@ -27,13 +27,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { AlertTriangle, Package, Loader2 } from "lucide-react";
+import { createDisasterReport, updateDisasterReport } from "../api/disaster";
 import {
-  createDisasterReport,
-  updateeDisasterReport,
-  disasterReportSchema,
-} from "@/lib/api/disaster";
-import { DISASTER_TYPES, DisasterReport, RESOURCE_TYPES, SEVERITY, SEVERITY_LEVELS } from "@/lib/types";
-import { getDistricts } from "@/lib/api/disaster";
+  DISASTER_TYPES,
+  DisasterReport,
+  DisasterType,
+  RESOURCE_TYPES,
+  Severity,
+  SEVERITY_LEVELS,
+} from "@/lib/types";
+import { disasterReportSchema } from "../validation";
+import { getDistricts } from "@/lib/api/common";
 
 interface DisasterReportFormProps {
   mode: "create" | "edit";
@@ -61,9 +65,9 @@ export default function DisasterReportForm({
   const form = useForm<z.infer<typeof disasterReportSchema>>({
     resolver: zodResolver(disasterReportSchema),
     defaultValues: {
-      address: disaster?.address || "",
+      address: disaster?.address || "" as any,
       districtId: disaster?.districtId || "",
-      disasterType: disaster?.disasterType || undefined,
+      disasterType: disaster?.disasterType as DisasterType|| undefined,
       severity: disaster?.severity || undefined,
       description: disaster?.description || "",
       resourcesNeeded: disaster?.resourcesNeeded || [],
@@ -147,11 +151,12 @@ export default function DisasterReportForm({
   const onSubmit = async (data: z.infer<typeof disasterReportSchema>) => {
     try {
       if (!isEditing) {
+
         const response = await createDisasterReport(data as any);
         if (response) {
           toast.success("Disaster report created successfully");
         } else {
-          const response = await updateeDisasterReport(
+          const response = await updateDisasterReport(
             disaster?._id as string,
             data as any
           );
@@ -181,8 +186,6 @@ export default function DisasterReportForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Location Section */}
-
             {/* Disaster Information Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -286,7 +289,7 @@ export default function DisasterReportForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {SEVERITY_LEVELS.map((level: SEVERITY) => (
+                        {SEVERITY_LEVELS.map((level: Severity) => (
                           <SelectItem key={level.label} value={level.value}>
                             {level.label}
                           </SelectItem>

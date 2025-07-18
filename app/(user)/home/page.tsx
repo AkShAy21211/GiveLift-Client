@@ -8,42 +8,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {  MapPin, Clock, Droplets } from "lucide-react";
+import { MapPin, Clock, Droplets } from "lucide-react";
 import { Metadata } from "next";
 import { DisasterReport } from "@/lib/types";
 import { headers } from "next/headers";
 import { createSSRApi } from "@/lib/api/server";
-import WeatherAleart from "./WeatherAleart";
-
-
+import WeatherAleart from "../components/WeatherAleart";
 
 export const metadata: Metadata = {
   title: "Home",
 };
 
-
-
 export async function getDisasters(header: Headers) {
   try {
     const api = await createSSRApi(header);
-    const response = await api.get("/disaster")
+    const response = await api.get("/disaster?status=verified");
     return response.data;
   } catch (error) {
     console.log(error);
   }
 }
 
-
 async function Home() {
   const headerConfig = await headers();
-  const disasters = await getDisasters(headerConfig)
+  const disasters = await getDisasters(headerConfig);
 
- 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Weather Alert */}
-        <WeatherAleart/>
+        <WeatherAleart />
         {/* Disasters Section */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-900">
@@ -65,12 +59,12 @@ async function Home() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base font-semibold text-gray-900">
-                      {disaster.disasterType} at {disaster.address}
+                      {disaster.disasterType} at {disaster.address.label}
                     </CardTitle>
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4" />
-                    <span>{disaster.address}</span>
+                    <span>{disaster.address.label}</span>
                   </div>
                 </CardHeader>
 
@@ -97,21 +91,27 @@ async function Home() {
                       <Badge
                         variant="outline"
                         className={`px-2 py-1 text-xs capitalize ${
-                          disaster.status === "pending"
+                          disaster.status === "reported"
                             ? "bg-orange-100 text-orange-600"
-                            : disaster.status === "responding"
+                            : disaster.status === "verified"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : disaster.status === "in_progress"
                             ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-200 text-gray-700"
+                            : disaster.status === "resolved"
+                            ? "bg-green-100 text-green-600"
+                            : disaster.status === "closed"
+                            ? "bg-gray-200 text-gray-700"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {disaster.status}
+                        {disaster.status.replaceAll("_", " ")}
                       </Badge>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <Clock className="w-3 h-3 text-gray-400" />
                       <span className="text-xs text-gray-500">
-                        {new Date(disaster.createdAt as string).toLocaleString()}
+                        {new Date(disaster.createdAt).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -144,7 +144,6 @@ async function Home() {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
