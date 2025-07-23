@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 export async function getDisasters(header: Headers) {
   try {
     const api = await createSSRApi(header);
-    const response = await api.get("/disasters?status=verified");
-    return response.data;
+    const response = await api.get("/disasters?status=verified");    
+    return response.data.disasters;
   } catch (error) {
     console.log(error);
   }

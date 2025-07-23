@@ -69,7 +69,7 @@ const FeatureCards: React.FC<FeatureCardsProps> = ({ disasterCount }) => {
           <div className="space-y-2">
             <FeatureCardButtons
               buttons={[
-                { icon: "Droplets" as any, label: "Pledge Resources", href: "/donate/resources" },
+                { icon: "Droplets" as any, label: "Pledge Resources", href: "/pledge-resources" },
                 // { icon: "DollarSign" as any, label: "Monetary Donation", href: "/donate/money" },
                 // { icon: "History" as any, label: "Donation History", href: "/donate/history" },
               ]}

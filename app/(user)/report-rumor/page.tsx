@@ -1,17 +1,47 @@
-"use client"
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Flag, Camera, MapPin, AlertTriangle, Send } from "lucide-react";
-import { RumorReportForm, rumorReportSchema } from '../validation/index';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Shield,
+  Flag,
+  Camera,
+  MapPin,
+  AlertTriangle,
+  Send,
+} from "lucide-react";
+import { RumorReportForm, rumorReportSchema } from "../validation/index";
+import { getDistricts } from "@/lib/api/common";
+import { toast } from "sonner";
+import { useGooglePlacesAutocomplete } from "@/hooks/useGooglePlacesAutocomplete";
+import { reportRumor } from "../api";
+import Link from "next/link";
 
 const ReportRumorPage = () => {
+  const [districts, setDistricts] = useState<{ _id: string; name: string }[]>(
+    []
+  );
+
   const form = useForm<RumorReportForm>({
     resolver: zodResolver(rumorReportSchema),
     defaultValues: {
@@ -23,12 +53,35 @@ const ReportRumorPage = () => {
       additionalInfo: "",
     },
   });
+  useEffect(() => {
+    getDistricts()
+      .then(setDistricts)
+      .catch(() => toast.error("Failed to load districts"));
+  }, []);
 
+  // Use the Google Places Autocomplete hook
+  const {
+    inputRef: placeInputRef,
+    isLoaded,
+    isLoading,
+    error,
+  } = useGooglePlacesAutocomplete({
+    onPlaceSelect: (place) => {
+      if (place.formatted_address) {
+        form.setValue("location", place.formatted_address);
+      }
+    },
+    options: {
+      types: ["establishment", "geocode"],
+      componentRestrictions: {
+        country: "in",
+      },
+      fields: ["place_id", "formatted_address", "name", "geometry"],
+    },
+  });
   const onSubmit = async (data: RumorReportForm) => {
     try {
-      console.log("Submitting rumor report:", data);
-      // API call would go here
-      alert("Rumor report submitted successfully! Our team will review it.");
+      await reportRumor(data);
       form.reset();
     } catch (error) {
       console.error("Error submitting rumor report:", error);
@@ -44,7 +97,8 @@ const ReportRumorPage = () => {
           Report Rumor
         </h1>
         <p className="text-gray-600 mt-2">
-          Help combat misinformation by reporting false or misleading information
+          Help combat misinformation by reporting false or misleading
+          information
         </p>
       </div>
 
@@ -53,12 +107,25 @@ const ReportRumorPage = () => {
           <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-lg">
             <AlertTriangle className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-orange-800 mb-1">Important Guidelines</h3>
+              <h3 className="font-semibold text-orange-800 mb-1">
+                Important Guidelines
+              </h3>
               <ul className="text-sm text-orange-700 space-y-1">
-                <li>• Only report information you believe to be false or misleading</li>
-                <li>• Provide as much detail as possible about where you saw the information</li>
-                <li>• Include screenshots if available (avoid sharing personal information)</li>
-                <li>• Our fact-checking team will review and verify your report</li>
+                <li>
+                  • Only report information you believe to be false or
+                  misleading
+                </li>
+                <li>
+                  • Provide as much detail as possible about where you saw the
+                  information
+                </li>
+                <li>
+                  • Include screenshots if available (avoid sharing personal
+                  information)
+                </li>
+                <li>
+                  • Our fact-checking team will review and verify your report
+                </li>
               </ul>
             </div>
           </div>
@@ -73,117 +140,189 @@ const ReportRumorPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Rumor Content */}
-            <div>
-              <Label htmlFor="content" className="mb-2 block">Rumor Content *</Label>
-              <Textarea
-                id="content"
-                {...form.register("content")}
-                placeholder="Describe the false or misleading information you encountered..."
-                rows={4}
-                className={form.formState.errors.content ? "border-red-500" : ""}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Rumor Content */}
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rumor Content</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe the false or misleading information you encountered..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Provide details about the misinformation you encountered
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.content && (
-                <p className="text-red-500 text-sm mt-1">{form.formState.errors.content.message}</p>
-              )}
-            </div>
 
-            {/* Source Information */}
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="sourceSeen" className="mb-2 block">Where did you see this? (Optional)</Label>
-                <Input
-                  id="sourceSeen"
-                  {...form.register("sourceSeen")}
-                  placeholder="e.g., WhatsApp group, Facebook, Twitter, News website"
+              {/* Source Information */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="sourceSeen"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Where did you see this?</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., WhatsApp group, Facebook, Twitter, News website"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Help us track the source of misinformation
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Help us track the source of misinformation
-                </p>
-              </div>
 
-              <div>
-                <Label htmlFor="screenshotUrl" className="flex items-center gap-2 mb-2">
-                  <Camera className="w-4 h-4" />
-                  Screenshot/Evidence URL (Optional)
-                </Label>
-                <Input
-                  id="screenshotUrl"
-                  {...form.register("screenshotUrl")}
-                  placeholder="Upload screenshot to image hosting service and paste URL here"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Screenshots help our team verify and debunk false information
-                </p>
-              </div>
-            </div>
-
-            {/* Location Information */}
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="location" className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  Location Referenced (Optional)
-                </Label>
-                <Input
-                  id="location"
-                  {...form.register("location")}
-                  placeholder="If the rumor mentions a specific location"
+                <FormField
+                  control={form.control}
+                  name="screenshotUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Camera className="w-4 h-4" />
+                        Evidence URL (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Upload screenshot to image hosting service and paste URL here"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Screenshots help our team verify and debunk false
+                        information
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <div>
-                <Label htmlFor="districtId" className="mb-2 block">District (Optional)</Label>
-                <Select onValueChange={(value) => form.setValue("districtId", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select district if applicable" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="central">Central District</SelectItem>
-                    <SelectItem value="north">North District</SelectItem>
-                    <SelectItem value="south">South District</SelectItem>
-                    <SelectItem value="east">East District</SelectItem>
-                    <SelectItem value="west">West District</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Additional Information */}
-            <div>
-              <Label htmlFor="additionalInfo" className="mb-2 block">Additional Information (Optional)</Label>
-              <Textarea
-                id="additionalInfo"
-                {...form.register("additionalInfo")}
-                placeholder="Any other details that might help our fact-checking team..."
-                rows={3}
+              {/* Location Information */}
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specific Location/Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        autoComplete="off"
+                        ref={placeInputRef}
+                        placeholder="Search for specific location, street, or landmark..."
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Start typing to search for specific places
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="flex gap-4">
-              <Button type="submit" className="flex items-center gap-2" disabled={form.formState.isSubmitting}>
-                <Send className="w-4 h-4" />
-                {form.formState.isSubmitting ? "Submitting..." : "Submit Report"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
-                Reset Form
-              </Button>
-            </div>
-          </form>
+              <FormField
+                control={form.control}
+                name="districtId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {districts.map((district) => (
+                          <SelectItem key={district._id} value={district._id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Additional Information */}
+              <FormField
+                control={form.control}
+                name="additionalInfo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Information</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any other details that might help our fact-checking team..."
+                        className="min-h-[75px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4">
+                   <Link
+                  href={"/home"}
+                  type="button"
+                  className="
+                w-auto flex-1 border border-gray-300 py-2 px-4 rounded-md text-center
+                "
+                >
+                  cancel
+                </Link>
+                <Button
+                  type="submit"
+                  className="flex items-center gap-2 flex-1"
+                  disabled={form.formState.isSubmitting}
+                >
+                  <Send className="w-4 h-4" />
+                  {form.formState.isSubmitting
+                    ? "Submitting..."
+                    : "Submit Report"}
+                </Button>
+             
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
       {/* Additional Resources */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-lg">Need Help Identifying Misinformation?</CardTitle>
+          <CardTitle className="text-lg">
+            Need Help Identifying Misinformation?
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-              <p>Check if the information comes from a reliable, official source</p>
+              <p>
+                Check if the information comes from a reliable, official source
+              </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
@@ -195,7 +334,9 @@ const ReportRumorPage = () => {
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-              <p>Be cautious of information that seems too good or bad to be true</p>
+              <p>
+                Be cautious of information that seems too good or bad to be true
+              </p>
             </div>
           </div>
         </CardContent>

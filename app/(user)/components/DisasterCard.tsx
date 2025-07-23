@@ -122,7 +122,7 @@ const DisasterCard: React.FC<DisasterCardProps> = ({ disaster }) => {
             <Eye className="w-3 h-3 mr-1" />
             View Details
           </Button>
-          <Button
+          {/* <Button
             size="sm"
             variant="outline"
             className="border-green-300 text-green-700 hover:bg-green-50"
@@ -130,7 +130,7 @@ const DisasterCard: React.FC<DisasterCardProps> = ({ disaster }) => {
           >
             <Heart className="w-3 h-3 mr-1" />
             Help
-          </Button>
+          </Button> */}
         </div>
       </CardContent>
     </Card>

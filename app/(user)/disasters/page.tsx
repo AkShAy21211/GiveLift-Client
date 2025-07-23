@@ -20,8 +20,8 @@ const DisasterListPage = () => {
 
   useEffect(() => {
     const fetchDisasters = async () => {
-      const response = await getDisasters();
-      setDisasters(response?.data as DisasterReport[]);
+      const response = await getDisasters();      
+      setDisasters(response?.data.disasters);
 
       setLoading(false);
     };

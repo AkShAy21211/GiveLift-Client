@@ -4,15 +4,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ButtonProps, buttonVariants } from "@/components/ui/button"
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
-)
-Pagination.displayName = "Pagination"
+
 
 const PaginationContent = React.forwardRef<
   HTMLUListElement,
@@ -105,7 +97,82 @@ const PaginationEllipsis = ({
   </span>
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"
+interface PaginationProps extends React.ComponentProps<"nav"> {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
 
+const Pagination = ({ 
+  className, 
+  currentPage, 
+  totalPages, 
+  onPageChange,
+  ...props 
+}: PaginationProps) => {
+  const canGoPrevious = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
+
+  return (
+    <nav
+      role="navigation"
+      aria-label="pagination"
+      className={cn("mx-auto flex w-full justify-center", className)}
+      {...props}
+    >
+      <ul className="flex flex-row items-center gap-1">
+        <li>
+          <button
+            onClick={() => canGoPrevious && onPageChange(currentPage - 1)}
+            disabled={!canGoPrevious}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "default" }),
+              "gap-1 pl-2.5",
+              !canGoPrevious && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Previous</span>
+          </button>
+        </li>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <li key={page}>
+            <button
+              onClick={() => onPageChange(page)}
+              className={cn(
+                buttonVariants({
+                  variant: currentPage === page ? "outline" : "ghost",
+                  size: "icon",
+                }),
+                currentPage === page && "bg-primary text-primary-foreground"
+              )}
+            >
+              {page}
+            </button>
+          </li>
+        ))}
+
+        <li>
+          <button
+            onClick={() => canGoNext && onPageChange(currentPage + 1)}
+            disabled={!canGoNext}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "default" }),
+              "gap-1 pr-2.5",
+              !canGoNext && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <span>Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </li>
+      </ul>
+    </nav>
+  )
+}
+
+export default Pagination;
 export {
   Pagination,
   PaginationContent,

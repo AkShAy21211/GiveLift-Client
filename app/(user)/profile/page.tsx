@@ -7,14 +7,9 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar,
-  Bell,
   Shield,
   Heart,
   Users,
-  AlertTriangle,
-  CloudRain,
-  Package,
   Edit,
   Trash2,
   Save,
@@ -23,7 +18,6 @@ import {
 } from "lucide-react";
 import { getProfile, updateProfile } from "../api/index";
 import { User } from "@/lib/types";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,10 +33,8 @@ const profileSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   phone: z
     .string()
-    .regex(
-      /^$|^\+91\s\d{10}$/,
-      "Phone must be in format +91 XXXXXXXXXX or empty"
-    )
+    .min(10, "Phone number must be at least 10 characters")
+
     .optional(),
   address: z.object({
     district: z.string().min(2, "District must be at least 2 characters"),

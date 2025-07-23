@@ -21,16 +21,6 @@ export enum ROLES {
   GENERAL_USER = "general_user",
 }
 
-// ---------------------
-// ✅ Global Declarations
-// ---------------------
-declare global {
-  interface Window {
-    google: any;
-    initAutocomplete: () => void;
-    _googleMapsLoaded: boolean;
-  }
-}
 
 // ---------------------
 // ✅ Auth State
@@ -124,10 +114,10 @@ export interface DisasterReport {
   description: string;
   reportedBy: string;
   resourcesNeeded: string[];
-  volunteersAssigned?: string;
+  volunteersAssigned?: string[]|[];
   status: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date|string;
+  updatedAt: Date|string;
 }
 
 // ---------------------
@@ -159,4 +149,43 @@ export interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface GeoPoint {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface Resource  {
+    resourceType: string;
+    quantity: number;
+    unit: string;
+    locationName: string;
+    contactInfo: string; 
+    availableFrom: Date|string; 
+    notes?: string; 
+    donatedBy?:string;
+    currentQuantity?: number; 
+    source?: string;
+    location?: GeoPoint; 
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+
+
+
+export interface Rumor  {
+  reportedBy?: string;
+  content: string;
+  sourceSeen?: string;
+  screenshotUrl?: string;
+  location?: string;
+  districtId?: string;
+  status?: "pending" | "reviewed" | "dismissed" | "escalated";
+  reviewedBy?: string;
+  associatedFactCheck?: string;
+  additionalInfo?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

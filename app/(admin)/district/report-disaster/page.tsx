@@ -1,13 +1,7 @@
-import { Suspense } from "react";
 import DisasterReportsClient from "./disaster-reports-client";
-import { DisasterReportsLoading } from "@/components/ui/CustomSkleton";
-import { headers } from "next/headers";
-import { getDisasters } from "./actions";
+
 
 export default async function DisasterReportsPage() {
-  // Fetch data on the server
-  const headersConfig = await headers();
-  const disasters = await getDisasters(headersConfig);
 
   return (
     <div className="container mx-auto py-8">
@@ -20,9 +14,7 @@ export default async function DisasterReportsPage() {
         </div>
       </div>
 
-      <Suspense fallback={<DisasterReportsLoading />}>
-        <DisasterReportsClient initialReports={disasters} />
-      </Suspense>
+        <DisasterReportsClient  />
     </div>
   );
 }

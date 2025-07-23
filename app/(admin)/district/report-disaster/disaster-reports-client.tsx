@@ -1,15 +1,16 @@
 "use client";
-import React, { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useTransition, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,99 +25,191 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Plus,
-  MapPin,
-  Users,
-  AlertTriangle,
-  Calendar,
   MoreHorizontal,
   Eye,
+  Search,
+  Pencil,
 } from "lucide-react";
-import { toast } from "sonner";
 import { DisasterReport, SEVERITY_LEVELS } from "@/lib/types";
 import DisasterReportForm from "./disaster-report-form";
-import { updateDisasterReportStatus } from "../api/disaster";
+import {
+  updateDisasterReportStatus,
+  getDisasterReports,
+} from "../api/disaster";
+import Pagination from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
 
-interface DisasterReportsClientProps {
-  initialReports: DisasterReport[];
-}
+export default function DisasterReportsClient() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-export default function DisasterReportsClient({
-  initialReports,
-}: DisasterReportsClientProps) {
-  const [reports, setReports] = useState<DisasterReport[]>(initialReports);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  // State for data and loading
+  const [reports, setReports] = useState<DisasterReport[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // State for dialogs
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<DisasterReport | null>(
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [currentReport, setCurrentReport] = useState<DisasterReport | null>(
     null
   );
-  const [currentDisaster, setCurrentDisaster] = useState<DisasterReport | null>(
-    null
-  );
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
-  // Filter reports based on severity and status
-  const filteredReports = reports.filter((report) => {
-    const severityMatch =
-      filterSeverity === "all" || report.severity === filterSeverity;
-    const statusMatch =
-      filterStatus === "all" || report.status === filterStatus;
-    return severityMatch && statusMatch;
-  });
+  // Get current filter values from URL
+  const page = Number(searchParams.get("page") || "1");
+  const search = searchParams.get("search") || "";
+  const severity = searchParams.get("severity") || "all";
+  const status = searchParams.get("status") || "all";
+  const perPage = 10;
 
-  const handleViewReport = (report: DisasterReport) => {
-    setSelectedReport(report);
-    setViewDialogOpen(true);
+  // Local filter state initialized from URL
+  const [searchTerm, setSearchTerm] = useState(search);
+  const [severityFilter, setSeverityFilter] = useState(severity);
+  const [statusFilter, setStatusFilter] = useState(status);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      try {
+        const params: any = {
+          page,
+          perPage,
+        };
+
+        // Only add parameters if they have values
+        if (search) params.search = search;
+        if (severity !== "all") params.severity = severity;
+        if (status !== "all") params.status = status;
+
+        const { reports, totalCount } = await getDisasterReports(params);
+        setReports(reports);
+        setTotalCount(totalCount);
+      } catch (error) {
+        console.error("Error fetching disaster reports:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [page, search, severity, status]);
+
+  // Helper function to create search params
+  const createQueryString = useCallback(
+    (params: Record<string, string | number | null>) => {
+      const newSearchParams = new URLSearchParams(searchParams?.toString());
+
+      for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === "" || value === "all") {
+          newSearchParams.delete(key);
+        } else {
+          newSearchParams.set(key, String(value));
+        }
+      }
+
+      return newSearchParams.toString();
+    },
+    [searchParams]
+  );
+
+  // Navigation helper
+  const navigateWithFilters = useCallback(
+    (updates: Record<string, string | number | null>) => {
+      const queryString = createQueryString(updates);
+      const url = pathname + (queryString ? `?${queryString}` : "");
+
+      // Use shallow routing to avoid full page refresh
+      router.push(url, { scroll: false });
+    },
+    [pathname, router, createQueryString]
+  );
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalCount / perPage);
+
+  // Handler functions
+  const handlePageChange = (newPage: number) => {
+    navigateWithFilters({ page: newPage > 1 ? newPage : null });
   };
 
-  const handleEditClick = (disaster: DisasterReport) => {
-    setCurrentDisaster(disaster);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigateWithFilters({
+      page: null, // Reset to page 1
+      search: searchTerm || null,
+    });
+  };
+
+  const handleSeverityFilterChange = (value: string) => {
+    setSeverityFilter(value);
+    navigateWithFilters({
+      page: null, // Reset to page 1
+      severity: value === "all" ? null : value,
+    });
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    navigateWithFilters({
+      page: null, // Reset to page 1
+      status: value === "all" ? null : value,
+    });
+  };
+
+  const handleEditClick = (report: DisasterReport) => {
+    setCurrentReport(report);
     setEditDialogOpen(true);
   };
 
-  // const handleDeleteClick = (coordinator: Coordinator) => {
-  //   setCurrentCoordinator(coordinator);
-  //   setDeleteDialogOpen(true);
-  // };
+  const handleViewClick = (report: DisasterReport) => {
+    setCurrentReport(report);
+    setViewDialogOpen(true);
+  };
 
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     reportId: string,
     newStatus: DisasterReport["status"]
   ) => {
     startTransition(async () => {
       try {
-        const result = await updateDisasterReportStatus(reportId, newStatus);
-
-        if (result.success) {
-          // Optimistically update the UI
-          setReports((prev) =>
-            prev.map((r) =>
-              r._id === reportId ? { ...r, status: newStatus } : r
-            )
-          );
-          toast.success(result.message);
-          router.refresh();
-        } else {
-          toast.error(result.message);
-        }
+         await updateDisasterReportStatus(reportId, newStatus);
+        setReports((prev) =>
+          prev.map((r) =>
+            r._id === reportId ? { ...r, status: newStatus } : r
+          )
+        );
+        router.refresh();
       } catch (error) {
-        toast.error("Failed to update status");
+        console.error("Failed to update status");
       }
     });
   };
 
   const handleFormSuccess = () => {
     setCreateDialogOpen(false);
-    // router.refresh();
+    setEditDialogOpen(false);
+    setCurrentReport(null);
+    router.refresh();
   };
 
-  const handleEditFormSuccess = () => {
-    setEditDialogOpen(false);
-    router.refresh();
+  // Reset filters function
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSeverityFilter("all");
+    setStatusFilter("all");
+    router.push(pathname, { scroll: false });
   };
 
   const getSeverityInfo = (level: string) => {
@@ -140,218 +233,246 @@ export default function DisasterReportsClient({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex flex-wrap gap-2">
-          <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by severity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Severity</SelectItem>
-              {SEVERITY_LEVELS.map((level) => (
-                <SelectItem key={level.value} value={level.value}>
-                  {level.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Filters Section */}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <form onSubmit={handleSearch} className="flex-1">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by location or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </form>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="responding">Responding</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-4">
+            <Select
+              value={severityFilter}
+              onValueChange={handleSeverityFilterChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Severity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Severities</SelectItem>
+                {SEVERITY_LEVELS.map((level) => (
+                  <SelectItem key={level.value} value={level.value}>
+                    {level.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="responding">Responding</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Reset Filters Button */}
+            {(searchTerm ||
+              severityFilter !== "all" ||
+              statusFilter !== "all") && (
+              <Button variant="outline" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            )}
+
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Report Disaster
+            </Button>
+          </div>
         </div>
 
-        <Button
-          onClick={() => setCreateDialogOpen(true)}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Report Disaster
-        </Button>
+        {/* Show active filters */}
+        {(searchTerm || severityFilter !== "all" || statusFilter !== "all") && (
+          <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+            <span>Active filters:</span>
+            {searchTerm && (
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Search: "{searchTerm}"
+              </span>
+            )}
+            {severityFilter !== "all" && (
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                Severity: {getSeverityInfo(severityFilter).label}
+              </span>
+            )}
+            {statusFilter !== "all" && (
+              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                Status: {statusFilter}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Reports Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredReports.map((report) => {
-          const severityInfo = getSeverityInfo(report.severity);
-
-          return (
-            <Card
-              key={report._id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    {report.address.label}
-                  </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleViewReport(report)}
-                        className="flex items-center"
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      {report.status !== "resolved" && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => handleEditClick(report)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleStatusUpdate(
-                                report?._id as string,
-                                "verified"
-                              )
-                            }
-                            disabled={report.status === "verified"}
-                          >
-                            Mark as Verified
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleStatusUpdate(
-                                report?._id as string,
-                                "responding"
-                              )
-                            }
-                            disabled={report.status === "responding"}
-                          >
-                            Mark as Responding
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleStatusUpdate(
-                                report?._id as string,
-                                "resolved"
-                              )
-                            }
-                          >
-                            Mark as Resolved
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline" className={severityInfo.color}>
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    {severityInfo.label}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className={getStatusColor(report?.status as string)}
-                  >
-                    {(report?.status?.charAt(0).toUpperCase() as string) +
-                      report?.status?.slice(1)}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm text-gray-600">
-                  <div className="font-medium text-gray-900">
-                    {report.disasterType}
-                  </div>
-                </div>
-
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {report?.address.label}
-                </div>
-
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(report?.createdAt).toLocaleDateString()}
-                </div>
-
-                <p className="text-sm text-gray-700 line-clamp-2">
-                  {report.description}
-                </p>
-
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {report.resourcesNeeded.slice(0, 2).map((resource, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {resource}
-                    </Badge>
-                  ))}
-                  {report.resourcesNeeded.length > 2 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{report.resourcesNeeded.length - 2} more
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filteredReports.length === 0 && (
-        <div className="text-center py-12">
-          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No disaster reports found
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {filterSeverity !== "all" || filterStatus !== "all"
-              ? "Try adjusting your filters to see more results."
-              : "No disaster reports have been submitted yet."}
-          </p>
-          <Button onClick={() => setCreateDialogOpen(true)} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Report First Disaster
-          </Button>
+      {/* Results Summary */}
+      {!isLoading && (
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {reports.length} of {totalCount} reports
+          {page > 1 && ` (Page ${page} of ${totalPages})`}
         </div>
       )}
 
-      {/* Create Disaster Report Dialog */}
+      {/* Table Section */}
+      {!isLoading && (
+        <div className="rounded-md border mb-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Location</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date Reported</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reports.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    No disaster reports found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                reports.map((report) => {
+                  const severityInfo = getSeverityInfo(report.severity);
+                  return (
+                    <TableRow key={report._id}>
+                      <TableCell className="font-medium">
+                        {report.address?.label || "N/A"}
+                      </TableCell>
+                      <TableCell>{report.disasterType}</TableCell>
+                      <TableCell>
+                        <Badge className={severityInfo.color}>
+                          {severityInfo.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(report.status)}>
+                          {report.status.charAt(0).toUpperCase() +
+                            report.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(report.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewClick(report)}
+                              className="flex items-center"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditClick(report)}
+                              className="flex items-center"
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            {report.status !== "resolved" && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleStatusUpdate(report._id, "verified")
+                                  }
+                                  disabled={report.status === "verified"}
+                                >
+                                  Mark as Verified
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleStatusUpdate(report._id, "responding")
+                                  }
+                                  disabled={report.status === "responding"}
+                                >
+                                  Mark as Responding
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleStatusUpdate(report._id, "resolved")
+                                  }
+                                >
+                                  Mark as Resolved
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Pagination Section */}
+      {!isLoading && totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
+
+      {/* Create Report Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              Report Disaster
-            </DialogTitle>
+            <DialogTitle>Report New Disaster</DialogTitle>
           </DialogHeader>
           <DisasterReportForm
             mode="create"
-            disaster={currentDisaster}
             onSuccess={handleFormSuccess}
             onCancel={() => setCreateDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Create Disaster Report Dialog */}
+      {/* Edit Report Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              Edit Disaster
-            </DialogTitle>
+            <DialogTitle>Edit Disaster Report</DialogTitle>
           </DialogHeader>
           <DisasterReportForm
-            disaster={currentDisaster}
             mode="edit"
-            onSuccess={handleEditFormSuccess}
+            disaster={currentReport}
+            onSuccess={handleFormSuccess}
             onCancel={() => setEditDialogOpen(false)}
           />
         </DialogContent>
@@ -363,43 +484,38 @@ export default function DisasterReportsClient({
           <DialogHeader>
             <DialogTitle>Disaster Report Details</DialogTitle>
           </DialogHeader>
-          {selectedReport && (
+          {currentReport && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-gray-900">Address</h4>
-                  <p className="text-gray-600">{selectedReport.address.label}</p>
+                  <p className="text-gray-600">
+                    {currentReport.address?.label || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Disaster Type</h4>
-                  <p className="text-gray-600">{selectedReport.disasterType}</p>
+                  <p className="text-gray-600">{currentReport.disasterType}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Severity Level</h4>
                   <Badge
-                    className={getSeverityInfo(selectedReport.severity).color}
+                    className={getSeverityInfo(currentReport.severity).color}
                   >
-                    {getSeverityInfo(selectedReport.severity).label}
+                    {getSeverityInfo(currentReport.severity).label}
                   </Badge>
                 </div>
-
                 <div>
                   <h4 className="font-medium text-gray-900">Status</h4>
-                  <Badge
-                    className={getStatusColor(selectedReport?.status as string)}
-                  >
-                    {(selectedReport.status
-                      ?.charAt(0)
-                      .toUpperCase() as string) +
-                      selectedReport.status?.slice(1)}
+                  <Badge className={getStatusColor(currentReport.status)}>
+                    {currentReport.status.charAt(0).toUpperCase() +
+                      currentReport.status.slice(1)}
                   </Badge>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">Reported Date</h4>
                   <p className="text-gray-600">
-                    {new Date(
-                      selectedReport?.createdAt
-                    ).toLocaleDateString()}
+                    {new Date(currentReport.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -408,7 +524,7 @@ export default function DisasterReportsClient({
                 <h4 className="font-medium text-gray-900 mb-2">
                   Situation Description
                 </h4>
-                <p className="text-gray-600">{selectedReport.description}</p>
+                <p className="text-gray-600">{currentReport.description}</p>
               </div>
 
               <div>
@@ -416,7 +532,7 @@ export default function DisasterReportsClient({
                   Resources Needed
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedReport.resourcesNeeded.map((resource, index) => (
+                  {currentReport.resourcesNeeded.map((resource, index) => (
                     <Badge key={index} variant="secondary">
                       {resource}
                     </Badge>

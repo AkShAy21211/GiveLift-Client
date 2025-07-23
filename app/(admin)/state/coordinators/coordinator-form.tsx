@@ -75,25 +75,12 @@ export default function CoordinatorForm({
       isVolunteer: values.isVolunteer || true,
     };
 
-    try {
-      if (!isEditing) {
-        const response = await createUser(data);
-        if (response) {
-          form.reset();
-          toast.success("Coordinator created successfully");
-        }
-      } else {
-        const response = await updateUser(coordinator?._id as string, data);
-        if (response) {
-          form.reset();
-          toast.success("Coordinator updated successfully");
-        }
-      }
-    } catch (error) {
-      console.log(error);
-
-      toast.error("Error creating coordinator");
+    if (!isEditing) {
+      await createUser(data);
+    } else {
+      await updateUser(coordinator?._id as string, data);
     }
+    form.reset();
   };
 
   return (

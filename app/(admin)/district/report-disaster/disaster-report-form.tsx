@@ -27,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { AlertTriangle, Package, Loader2 } from "lucide-react";
-import { createDisasterReport, updateDisasterReport } from "../api/disaster";
+import { updateDisasterReport } from "../api/disaster";
 import {
   DISASTER_TYPES,
   DisasterReport,
@@ -37,7 +37,7 @@ import {
   SEVERITY_LEVELS,
 } from "@/lib/types";
 import { disasterReportSchema } from "../validation";
-import { getDistricts } from "@/lib/api/common";
+import { createDisasterReport, getDistricts } from "@/lib/api/common";
 
 interface DisasterReportFormProps {
   mode: "create" | "edit";
@@ -65,9 +65,9 @@ export default function DisasterReportForm({
   const form = useForm<z.infer<typeof disasterReportSchema>>({
     resolver: zodResolver(disasterReportSchema),
     defaultValues: {
-      address: disaster?.address || "" as any,
+      address: disaster?.address || ("" as any),
       districtId: disaster?.districtId || "",
-      disasterType: disaster?.disasterType as DisasterType|| undefined,
+      disasterType: (disaster?.disasterType as DisasterType) || undefined,
       severity: disaster?.severity || undefined,
       description: disaster?.description || "",
       resourcesNeeded: disaster?.resourcesNeeded || [],
@@ -151,25 +151,14 @@ export default function DisasterReportForm({
   const onSubmit = async (data: z.infer<typeof disasterReportSchema>) => {
     try {
       if (!isEditing) {
-
-        const response = await createDisasterReport(data as any);
-        if (response) {
-          toast.success("Disaster report created successfully");
-        } else {
-          const response = await updateDisasterReport(
-            disaster?._id as string,
-            data as any
-          );
-          if (response) {
-            toast.success("Disaster report updated successfully");
-          }
-        }
+        await createDisasterReport(data as any);
+      } else {
+        await updateDisasterReport(disaster?._id as string, data as any);
       }
+
       onSuccess();
     } catch (error) {
       console.log(error);
-
-      toast.error("Failed to create disaster report");
     }
   };
 

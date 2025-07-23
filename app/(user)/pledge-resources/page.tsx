@@ -1,16 +1,40 @@
-"use client"
+"use client";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, Package, MapPin, Phone, Calendar, Send } from "lucide-react";
-import { ResourcePledgeForm, resourcePledgeSchema } from '../validation/index';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Heart,
+  Package,
+  MapPin,
+  Phone,
+  Calendar,
+  Send,
+  Loader2,
+} from "lucide-react";
+import { ResourcePledgeForm, resourcePledgeSchema } from "../validation/index";
 import { RESOURCE_TYPES, ResourceType } from "@/lib/types";
+import { useGooglePlacesAutocomplete } from "@/hooks/useGooglePlacesAutocomplete";
+import { donateResource } from "../api";
 
 const PledgeResourcesPage = () => {
   const form = useForm<ResourcePledgeForm>({
@@ -25,12 +49,31 @@ const PledgeResourcesPage = () => {
       notes: "",
     },
   });
-
+  // Use the Google Places Autocomplete hook
+  const {
+    inputRef: placeInputRef,
+    isLoaded,
+    isLoading,
+    error,
+  } = useGooglePlacesAutocomplete({
+    onPlaceSelect: (place) => {
+      if (place.formatted_address) {
+        form.setValue("locationName", place.formatted_address);
+      }
+    },
+    options: {
+      types: ["establishment", "geocode"],
+      componentRestrictions: {
+        country: "in",
+      },
+      fields: ["place_id", "formatted_address", "name", "geometry"],
+    },
+  });
   const onSubmit = async (data: ResourcePledgeForm) => {
     try {
       console.log("Submitting resource pledge:", data);
-      // API call would go here
-      alert("Resource pledge submitted successfully!");
+      await donateResource(data);
+
       form.reset();
     } catch (error) {
       console.error("Error submitting pledge:", error);
@@ -58,130 +101,215 @@ const PledgeResourcesPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Resource Information */}
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="resourceType" className="mb-2 block">Resource Type *</Label>
-                <Select onValueChange={(value) => form.setValue("resourceType", value as ResourceType)}>
-                  <SelectTrigger className={form.formState.errors.resourceType ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select resource type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RESOURCE_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.resourceType && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.resourceType.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="quantity" className="mb-2 block">Quantity *</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    {...form.register("quantity", { valueAsNumber: true })}
-                    placeholder="Enter quantity"
-                    className={form.formState.errors.quantity ? "border-red-500" : ""}
-                  />
-                  {form.formState.errors.quantity && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.quantity.message}</p>
-                  )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Resource Information */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <h3 className="text-lg font-semibold">
+                    Resource Information
+                  </h3>
                 </div>
 
-                <div>
-                  <Label htmlFor="unit" className="mb-2 block">Unit *</Label>
-                  <Input
-                    id="unit"
-                    {...form.register("unit")}
-                    placeholder="e.g., pieces, liters, kg"
-                    className={form.formState.errors.unit ? "border-red-500" : ""}
-                  />
-                  {form.formState.errors.unit && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.unit.message}</p>
+                <FormField
+                  control={form.control}
+                  name="resourceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Resource Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select resource type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {RESOURCE_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter quantity"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., pieces, liters, kg"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Location and Contact */}
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="locationName" className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  Pickup Location *
-                </Label>
-                <Input
-                  id="locationName"
-                  {...form.register("locationName")}
-                  placeholder="Where can the resources be collected?"
-                  className={form.formState.errors.locationName ? "border-red-500" : ""}
+              {/* Location and Contact */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <h3 className="text-lg font-semibold">Location & Contact</h3>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="locationName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Pickup Location
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoComplete="off"
+                          ref={placeInputRef}
+                          placeholder="Where can the resources be collected?"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Provide a clear address or landmark for pickup
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {form.formState.errors.locationName && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.locationName.message}</p>
-                )}
+
+                <FormField
+                  control={form.control}
+                  name="contactInfo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        Contact Information
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Phone number or email" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        How can coordinators reach you for pickup arrangements?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="availableFrom"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Available From
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        When will the resources be ready for pickup?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div>
-                <Label htmlFor="contactInfo" className="flex items-center gap-2 mb-2">
-                  <Phone className="w-4 h-4" />
-                  Contact Information *
-                </Label>
-                <Input
-                  id="contactInfo"
-                  {...form.register("contactInfo")}
-                  placeholder="Phone number or email"
-                  className={form.formState.errors.contactInfo ? "border-red-500" : ""}
+              {/* Additional Notes */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional Notes (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Any additional information about the resources..."
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Include any special instructions, conditions, or details
+                        about the resources
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {form.formState.errors.contactInfo && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.contactInfo.message}</p>
-                )}
               </div>
 
-              <div>
-                <Label htmlFor="availableFrom" className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-4 h-4" />
-                  Available From *
-                </Label>
-                <Input
-                  id="availableFrom"
-                  type="date"
-                  {...form.register("availableFrom")}
-                  className={form.formState.errors.availableFrom ? "border-red-500" : ""}
-                />
-                {form.formState.errors.availableFrom && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.availableFrom.message}</p>
-                )}
+              {/* Form Actions */}
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => form.reset()}
+                >
+                  Reset Form
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Pledge Resources
+                    </>
+                  )}
+                </Button>
               </div>
-            </div>
-
-            {/* Additional Notes */}
-            <div>
-              <Label htmlFor="notes" className="mb-2 block">Additional Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                {...form.register("notes")}
-                placeholder="Any additional information about the resources..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <Button type="submit" className="flex items-center gap-2" disabled={form.formState.isSubmitting}>
-                <Send className="w-4 h-4" />
-                {form.formState.isSubmitting ? "Submitting..." : "Pledge Resources"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
-                Reset Form
-              </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
